@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>BarakoSense - Analytics Dashboard</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brown: {
+              DEFAULT: "#8B4513",
+              light: "#A0522D",
+            },
+            white: "#FFFFFF",
+            beige: "#F9F5F2",
+          },
+          fontFamily: {
+            display: ["Space Grotesk", "sans-serif"],
+          },
+        },
+      },
+    };
+  </script>
+</head>
+
+<body class="bg-white text-brown font-display">
+  <div class="flex min-h-screen">
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-white border-r border-brown/20 flex-shrink-0">
+      <div class="p-6">
+        <!-- Logo + Title -->
+        <div class="flex items-center gap-3 mb-10">
+          <svg class="text-brown h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M18 8h1a3 3 0 0 1 0 6h-1v1a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V8h15Zm1 4a1 1 0 0 0 0-2h-1v2h1ZM6 19h7a3 3 0 0 0 3-3V8H6v8a3 3 0 0 0 3 3Zm11 2H4a1 1 0 0 1 0-2h13a1 1 0 1 1 0 2Z" />
+          </svg>
+          <div>
+            <h1 class="text-lg font-bold text-brown">BarakoSense</h1>
+            <p class="text-xs text-brown/70">Admin</p>
+          </div>
+        </div>
+
+        <!-- Nav Menu -->
+        <nav class="space-y-2">
+          <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-brown text-white font-semibold">
+            <span class="material-symbols-outlined text-xl">dashboard</span>
+            <span>Analytics</span>
+          </a>
+
+          <a href="history.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-brown hover:bg-beige transition">
+            <span class="material-symbols-outlined text-xl">history</span>
+            <span>History</span>
+          </a>
+
+          <a href="lexicon.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-brown hover:bg-beige transition">
+            <span class="material-symbols-outlined text-xl">book</span>
+            <span>Lexicon</span>
+          </a>
+
+          <a href="logout.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-brown hover:bg-beige transition">
+            <span class="material-symbols-outlined text-xl">logout</span>
+            <span>Logout</span>
+          </a>
+        </nav>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="flex-1 flex flex-col bg-white">
+      <!-- HEADER -->
+      <header class="bg-white border-b border-brown/10 px-8 py-5 flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-bold text-brown">Analytics Dashboard</h2>
+          <p class="text-sm text-brown/60 mt-1">Overview of uploaded images and model predictions</p>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 rounded-full bg-brown flex items-center justify-center text-white font-bold">
+            A
+          </div>
+        </div>
+      </header>
+
+      <!-- MAIN DASHBOARD CONTENT -->
+      <main class="flex-1 p-10 bg-white space-y-10">
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Predictions Over Time -->
+          <div class="bg-white border border-brown/10 rounded-xl p-5 shadow-sm">
+            <h3 class="text-lg font-semibold mb-3 text-brown">Predictions Over Time</h3>
+            <div class="h-40">
+              <canvas id="predictionsChart" class="w-full h-full"></canvas>
+            </div>
+          </div>
+
+          <!-- Prediction Results -->
+          <div class="bg-white border border-brown/10 rounded-xl p-5 shadow-sm">
+            <h3 class="text-lg font-semibold mb-3 text-brown">Prediction Summary</h3>
+            <div class="h-40 flex items-center justify-center">
+              <canvas id="resultsChart" class="w-45 h-45"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Common Sensory Notes -->
+        <div class="bg-white border border-brown/10 rounded-xl p-6 shadow-sm">
+          <h3 class="text-lg font-semibold mb-4 text-brown">Common Sensory Notes</h3>
+          <div class="space-y-3">
+            <div>
+              <div class="flex justify-between mb-1 text-brown/80">
+                <span>Chocolate</span><span>80%</span>
+              </div>
+              <div class="h-2 bg-brown/10 rounded-full">
+                <div class="h-2 bg-brown rounded-full w-[80%]"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1 text-brown/80">
+                <span>Nutty</span><span>65%</span>
+              </div>
+              <div class="h-2 bg-brown/10 rounded-full">
+                <div class="h-2 bg-brown rounded-full w-[65%]"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1 text-brown/80">
+                <span>Fruity</span><span>50%</span>
+              </div>
+              <div class="h-2 bg-brown/10 rounded-full">
+                <div class="h-2 bg-brown rounded-full w-[50%]"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    Chart.defaults.font.size = 12;
+    Chart.defaults.plugins.legend.labels.boxWidth = 12;
+    Chart.defaults.plugins.legend.labels.padding = 10;
+  </script>
+
+  <script>
+    // Capture visible area before going to logout.html
+    document.querySelector('a[href="login.html"]').addEventListener('click', (e) => {
+      e.preventDefault();
+      html2canvas(document.body).then(canvas => {
+        const img = canvas.toDataURL("image/png");
+        sessionStorage.setItem("lastPageBg", img);
+        window.location.href = "logout.html";
+      });
+    });
+  </script>
+
+  <!-- Add this in your <head> or before </body> -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="../../script/dashboard.js"></script>
+
+</body>
+</html>

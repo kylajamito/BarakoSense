@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BarakoSense</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.tailwindcss.com?plugins=container-queries"></script>
+
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#8B4513",
+            "text-dark": "#EFE7DD",
+            "text-muted-dark": "#B9A493",
+            "border-dark": "#4A372A",
+          },
+          fontFamily: {
+            display: ["Space Grotesk", "sans-serif"],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    /* Full background image */
+    body {
+      background-image: linear-gradient(
+          rgba(21, 33, 17, 0.6),
+          rgba(21, 33, 17, 0.8)
+        ),
+        url("https://lh3.googleusercontent.com/aida-public/AB6AXuCXzHQ_9w06RdcAQeeA2rxZbXjNpd-0UtggeyU_YI2y94FJjs_F5jsbrg3XywwH5Fssb-ViWcySCQDHdDKxW2tVAB8rQHNRjX0AJ50H_xvtD0ILPhIiNEisxOL2LvIu1JLBxdHA8Yx-e0hCtiWKVrQSKASglIUWeEkOnNIHJWXJu9waQxtjkVY5flWw-BNpULBn0tlZYEu75W1pTTEAQ3b_S2_urWZAxgd-fqhLrjDj6DB0jFHNJEWHaLHKFqQl0dSd4mx9ANGd1T1V");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      font-family: "Space Grotesk", sans-serif;
+      color: #EFE7DD; /* text color */
+    }
+
+    header, footer {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+    }
+  </style>
+</head>
+
+<body class="font-display text-text-dark flex flex-col min-h-screen">
+  <!-- Header -->
+  <header class="sticky top-0 z-10">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <svg
+            class="text-primary h-8 w-8"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M18 8h1a3 3 0 0 1 0 6h-1v1a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V8h15Zm1 4a1 1 0 0 0 0-2h-1v2h1ZM6 19h7a3 3 0 0 0 3-3V8H6v8a3 3 0 0 0 3 3Zm11 2H4a1 1 0 0 1 0-2h13a1 1 0 1 1 0 2Z"
+            />
+          </svg>
+          <h1 class="text-xl font-bold">BarakoSense</h1>
+        </div>
+
+        <nav class="hidden md:flex items-center gap-6 text-sm font-medium">
+          <a class="hover:text-primary transition-colors" href="index.html">Home</a>
+          <a class="hover:text-primary transition-colors" href="predict.html">Predict</a>
+          <a class="hover:text-primary transition-colors" href="lexicon.html">Lexicon</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="flex-grow flex items-center justify-center text-center px-4">
+    <div class="max-w-3xl">
+      <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+        Discover the World of Liberica Coffee
+      </h1>
+      <p class="text-lg md:text-xl mb-8">
+        Your guide to identifying Liberica coffee trees and exploring their
+        unique sensory profiles. Upload an image to predict or dive into our
+        sensory lexicon.
+      </p>
+      <div class="flex flex-wrap justify-center gap-4">
+        <a
+          href="predict.html"
+          class="px-6 py-3 rounded-lg bg-primary text-background-dark font-bold hover:bg-primary/90 transition-all transform hover:scale-105"
+        >
+          Start Predicting
+        </a>
+        <a
+          href="lexicon.html"
+          class="px-6 py-3 rounded-lg border border-text-dark text-text-dark font-bold hover:bg-text-dark hover:text-background-dark transition-all transform hover:scale-105"
+        >
+          Explore Lexicon
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="text-center py-4 text-sm text-text-muted-dark">
+    <p>© 2024 Liberica ID. All Rights Reserved.</p>
+  </footer>
+
+  <script>
+    // Highlight active navbar link
+    document.addEventListener("DOMContentLoaded", () => {
+      const currentPage = window.location.pathname.split("/").pop();
+      const links = document.querySelectorAll("nav a");
+      links.forEach(link => {
+        const href = link.getAttribute("href");
+        if (href === currentPage) {
+          link.classList.add("text-primary", "font-bold");
+        } else {
+          link.classList.remove("text-primary", "font-bold");
+        }
+      });
+    });
+  </script>
+</body>
+</html>

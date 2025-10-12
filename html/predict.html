@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>BarakoSense</title>
+
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+
+    <script src="https://cdn.tailwindcss.com?plugins=container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                    "primary": "#8B4513",             // Coffee brown (main accent)
+                    "background-light": "#F7F3EE",    // Creamy beige (background)
+                    "background-dark": "#2B1B12",     // Dark roast brown (dark mode background)
+                    "surface-light": "#FFFFFF",       // White cup (light surface)
+                    "surface-dark": "#3B2A21",        // Mocha brown (dark surface)
+                    "text-light": "#2E1F14",          // Espresso text (light mode)
+                    "text-dark": "#EFE7DD",           // Latte text (dark mode)
+                    "text-muted-light": "#8D7B6A",    // Light roast (muted text light)
+                    "text-muted-dark": "#B9A493",     // Cappuccino foam (muted text dark)
+                    "border-light": "#E6D8C3",        // Light border beige
+                    "border-dark": "#4A372A",         // Dark border coffee brown
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "0.75rem",
+                        "xl": "1rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
+    <div class="flex flex-col min-h-screen">
+
+        <!-- HEADER -->
+        <header class="sticky top-0 z-10 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16 border-b border-border-light dark:border-border-dark">
+                    <div class="flex items-center gap-3">
+                        <svg
+                            class="text-primary h-8 w-8"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path d="M18 8h1a3 3 0 0 1 0 6h-1v1a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V8h15Zm1 4a1 1 0 0 0 0-2h-1v2h1ZM6 19h7a3 3 0 0 0 3-3V8H6v8a3 3 0 0 0 3 3Zm11 2H4a1 1 0 0 1 0-2h13a1 1 0 1 1 0 2Z" />
+                        </svg>
+                        <h1 class="text-xl font-bold">BarakoSense</h1>
+                    </div>
+                    <nav class="hidden md:flex items-center gap-6 text-sm font-medium">
+                        <a class="hover:text-primary transition-colors" href="index.html">Home</a>
+                        <a class="hover:text-primary transition-colors" href="predict.html">Predict</a>
+                        <a class="hover:text-primary transition-colors" href="lexicon.html">Lexicon</a>
+                    </nav>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN -->
+        <main class="flex-grow flex flex-col items-center justify-center p-4 sm:p-8">
+            <div class="w-full max-w-6xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-xl p-8 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
+
+                <!-- LEFT COLUMN -->
+                <div class="space-y-6">
+                    <div class="text-center md:text-left">
+                        <h2 class="text-3xl sm:text-4xl font-bold tracking-tight">Identify Your Coffee Plant</h2>
+                        <p class="mt-3 text-base sm:text-lg text-text-muted-light dark:text-text-muted-dark">
+                            Upload images of your coffee plant's leaves, bark, or cherries to begin.
+                        </p>
+                    </div>
+
+                    <!-- Upload Section -->
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                            <!-- Leaves -->
+                            <div class="space-y-2">
+                                <h3 class="text-lg font-semibold text-center sm:text-left">Leaves</h3>
+                                <div class="relative w-full aspect-square border-2 border-dashed border-border-light dark:border-border-dark rounded-lg flex items-center justify-center hover:border-primary transition-colors cursor-pointer">
+                                    <input class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" id="leaves-upload" type="file" accept="image/*"/>
+                                    <div class="flex flex-col items-center justify-center space-y-2 pointer-events-none">
+                                        <span class="material-symbols-outlined text-4xl text-primary">cloud_upload</span>
+                                        <p class="text-sm font-medium">Upload</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bark -->
+                            <div class="space-y-2">
+                                <h3 class="text-lg font-semibold text-center sm:text-left">Bark</h3>
+                                <div class="relative w-full aspect-square border-2 border-dashed border-border-light dark:border-border-dark rounded-lg flex items-center justify-center hover:border-primary transition-colors cursor-pointer">
+                                    <input class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" id="bark-upload" type="file" accept="image/*"/>
+                                    <div class="flex flex-col items-center justify-center space-y-2 pointer-events-none">
+                                        <span class="material-symbols-outlined text-4xl text-primary">cloud_upload</span>
+                                        <p class="text-sm font-medium">Upload</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Cherries -->
+                            <div class="space-y-2">
+                                <h3 class="text-lg font-semibold text-center sm:text-left">Cherries</h3>
+                                <div class="relative w-full aspect-square border-2 border-dashed border-border-light dark:border-border-dark rounded-lg flex items-center justify-center hover:border-primary transition-colors cursor-pointer">
+                                    <input class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" id="cherries-upload" type="file" accept="image/*"/>
+                                    <div class="flex flex-col items-center justify-center space-y-2 pointer-events-none">
+                                        <span class="material-symbols-outlined text-4xl text-primary">cloud_upload</span>
+                                        <p class="text-sm font-medium">Upload</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Uploaded Image Previews -->
+                        <div>
+                            <h3 class="text-lg font-semibold mb-3">Uploaded Images</h3>
+                            <div class="grid grid-cols-3 gap-4">
+                                <div id="leaves-preview" class="w-full aspect-square bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center text-xs text-text-muted-light dark:text-text-muted-dark">Leaves</div>
+                                <div id="bark-preview" class="w-full aspect-square bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center text-xs text-text-muted-light dark:text-text-muted-dark">Bark</div>
+                                <div id="cherries-preview" class="w-full aspect-square bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center text-xs text-text-muted-light dark:text-text-muted-dark">Cherries</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN -->
+                <div class="space-y-6">
+                    <h3 class="text-2xl font-bold">Prediction Results</h3>
+                    <div class="space-y-3">
+                        <div class="bg-background-light dark:bg-background-dark rounded-lg p-3 border border-border-light dark:border-border-dark">
+                            <p class="text-sm text-text-muted-light dark:text-text-muted-dark mb-1">Leaves:</p>
+                            <p class="text-base font-semibold" id="leaves-result">--</p>
+                        </div>
+                        <div class="bg-background-light dark:bg-background-dark rounded-lg p-3 border border-border-light dark:border-border-dark">
+                            <p class="text-sm text-text-muted-light dark:text-text-muted-dark mb-1">Bark:</p>
+                            <p class="text-base font-semibold" id="bark-result">--</p>
+                        </div>
+                        <div class="bg-background-light dark:bg-background-dark rounded-lg p-3 border border-border-light dark:border-border-dark">
+                            <p class="text-sm text-text-muted-light dark:text-text-muted-dark mb-1">Cherries:</p>
+                            <p class="text-base font-semibold" id="cherries-result">--</p>
+                        </div>
+                        <div class="bg-primary/10 dark:bg-primary/20 rounded-lg p-4 border-2 border-primary">
+                            <p class="text-sm text-text-muted-light dark:text-text-muted-dark mb-1">Final Prediction:</p>
+                            <p class="text-lg font-bold text-primary" id="final-result">Awaiting analysis...</p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <button id="predict-btn" disabled class="w-full flex items-center justify-center gap-2 rounded-lg h-12 px-6 bg-primary text-background-dark font-bold transition-transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span class="material-symbols-outlined">auto_awesome</span>
+                            <span>Start Prediction</span>
+                        </button>
+                        <button id="clear-btn" class="w-full flex items-center justify-center gap-2 rounded-lg h-12 px-6 bg-border-light dark:bg-border-dark text-text-light dark:text-text-dark font-semibold hover:bg-primary/20 dark:hover:bg-primary/30 transition-transform hover:scale-[1.02]">
+                            <span class="material-symbols-outlined">delete</span>
+                            <span>Clear Images</span>
+                        </button>
+                    </div>
+
+                    <div>
+                        <p class="mt-3 text-sm text-text-muted-light dark:text-text-muted-dark">
+                        Disclaimer: The model can generate a prediction even if only one or two images (leaf, bark, or cherry) are uploaded. However, providing all three will improve the accuracy of the prediction.
+                    </p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="bg-background-light dark:bg-background-dark border-t border-border-light dark:border-border-dark">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-sm text-text-muted-light dark:text-text-muted-dark">
+                <p>© 2024 Liberica ID. All Rights Reserved.</p>
+            </div>
+        </footer>
+    </div>
+<script src="script/predict.js"></script>
+</body>
+</html>

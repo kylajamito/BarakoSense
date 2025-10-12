@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>BarakoSense - Lexicon</title>
+
+  <!-- TailwindCSS -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com" rel="preconnect" />
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#8B4513",
+            "background-light": "#F7F3EE",
+            "background-dark": "#2B1B12",
+            "surface-light": "#FFFFFF",
+            "surface-dark": "#3B2A21",
+            "text-light": "#2E1F14",
+            "text-dark": "#EFE7DD",
+            "text-muted-light": "#8D7B6A",
+            "text-muted-dark": "#B9A493",
+            "border-light": "#E6D8C3",
+            "border-dark": "#4A372A"
+          },
+          fontFamily: {
+            "display": ["Space Grotesk", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.5rem",
+            "lg": "0.75rem",
+            "xl": "1rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings:
+        'FILL' 0,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 24;
+    }
+    
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    body::-webkit-scrollbar,
+    .overflow-x-auto::-webkit-scrollbar {
+      display: none;
+    }
+    
+    /* Hide scrollbar for IE, Edge and Firefox */
+    body,
+    .overflow-x-auto {
+      -ms-overflow-style: none;  /* IE and Edge */
+      scrollbar-width: none;  /* Firefox */
+    }
+  </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
+  <div class="flex flex-col min-h-screen">
+    <!-- HEADER -->
+    <header class="sticky top-0 z-10 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16 border-b border-border-light dark:border-border-dark">
+          <div class="flex items-center gap-3">
+            <svg class="text-primary h-8 w-8" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 8h1a3 3 0 0 1 0 6h-1v1a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V8h15Zm1 4a1 1 0 0 0 0-2h-1v2h1ZM6 19h7a3 3 0 0 0 3-3V8H6v8a3 3 0 0 0 3 3Zm11 2H4a1 1 0 0 1 0-2h13a1 1 0 1 1 0 2Z" />
+            </svg>
+            <h1 class="text-xl font-bold">BarakoSense</h1>
+          </div>
+          <nav class="hidden md:flex items-center gap-6 text-sm font-medium">
+            <a class="hover:text-primary transition-colors" href="index.html">Home</a>
+            <a class="hover:text-primary transition-colors" href="predict.html">Predict</a>
+            <a class="text-primary font-bold" href="lexicon.html">Lexicon</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN SECTION -->
+    <main class="flex flex-1 justify-center px-4 py-8 sm:px-6 lg:px-8">
+      <div class="w-full max-w-6xl">
+        <!-- Title Section -->
+        <div class="mb-8 text-center">
+          <h1 class="text-4xl font-bold tracking-tight text-primary sm:text-5xl">
+            Liberica Sensory Lexicon
+          </h1>
+          <p class="mt-4 text-lg text-text-muted-light dark:text-text-muted-dark">
+            Explore and filter the sensory attributes of Liberica coffee based on aroma, flavor, texture, and more.
+          </p>
+        </div>
+
+        <!-- Search and Filter Section -->
+        <div class="mb-8 flex flex-col gap-4 sm:flex-row">
+          <!-- Search Input -->
+          <div class="relative flex-1">
+            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <svg class="h-5 w-5 text-text-muted-light dark:text-text-muted-dark" fill="currentColor" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+                <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path>
+              </svg>
+            </div>
+            <input
+              id="searchInput"
+              class="w-full rounded-lg border border-primary/20 bg-surface-light dark:bg-surface-dark py-3 pl-10 pr-4 text-text-light dark:text-text-dark placeholder:text-text-muted-light dark:placeholder:text-text-muted-dark focus:border-primary focus:ring-2 focus:ring-primary/50 focus:outline-none"
+              type="search"
+              placeholder="Search descriptor..."
+            />
+          </div>
+
+          <!-- Category Filter -->
+          <div class="sm:w-64">
+            <select
+              id="categoryFilter"
+              class="w-full rounded-lg border border-primary/20 bg-surface-light dark:bg-surface-dark py-3 px-4 text-text-light dark:text-text-dark focus:border-primary focus:ring-2 focus:ring-primary/50 focus:outline-none"
+            >
+              <option value="all">All Categories</option>
+              <option value="Aroma">Aroma</option>
+              <option value="Flavor">Flavor</option>
+              <option value="Texture">Texture</option>
+              <option value="Acidity">Acidity</option>
+              <option value="Aftertaste">Aftertaste</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Table Section -->
+        <div class="overflow-hidden rounded-lg border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark shadow-sm">
+          <div class="overflow-x-auto">
+            <table class="w-full table-fixed">
+              <thead class="bg-primary/5 dark:bg-primary/10">
+                <tr>
+                  <th class="w-1/5 px-5 py-3 text-left text-sm font-semibold text-text-light dark:text-text-dark">
+                    Descriptor
+                  </th>
+                  <th class="w-1/6 px-5 py-3 text-left text-sm font-semibold text-text-light dark:text-text-dark">
+                    Category
+                  </th>
+                  <th class="w-1/2 px-5 py3 text-left text-sm font-semibold text-text-light dark:text-text-dark">
+                    Definition
+                  </th>
+                  <th class="w-1/6 px5 py-3 text-center text-sm font-semibold text-text-light dark:text-text-dark">
+                    Intensity (1-5)
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="lexiconTable" class="divide-y divide-border-light dark:divide-border-dark">
+                <!-- Table rows will be populated by JavaScript -->
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- No Results Message -->
+          <div id="noResults" class="hidden px-6 py-12 text-center">
+            <p class="text-text-muted-light dark:text-text-muted-dark">
+              No descriptors found matching your search.
+            </p>
+          </div>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="mt-6 flex items-center justify-between">
+          <div class="text-sm text-text-muted-light dark:text-text-muted-dark">
+            Showing <span id="showingStart">1</span>-<span id="showingEnd">6</span> of <span id="totalItems">15</span> descriptors
+          </div>
+          
+          <div class="flex items-center gap-2">
+            <button
+              id="prevBtn"
+              class="px-4 py-2 rounded-lg border border-primary/20 bg-surface-light dark:bg-surface-dark text-text-light dark:text-text-dark hover:bg-primary/10 dark:hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Previous
+            </button>
+            
+            <div id="pageNumbers" class="flex items-center gap-1">
+              <!-- Page numbers will be populated by JavaScript -->
+            </div>
+            
+            <button
+              id="nextBtn"
+              class="px-4 py-2 rounded-lg border border-primary/20 bg-surface-light dark:bg-surface-dark text-text-light dark:text-text-dark hover:bg-primary/10 dark:hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-background-light dark:bg-background-dark border-t border-border-light dark:border-border-dark mt-1">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-sm text-text-muted-light dark:text-text-muted-dark">
+        <p>© 2024 Liberica ID. All Rights Reserved.</p>
+      </div>
+    </footer>
+  </div>
+<script src="script/lexicon.js"></script>
+</body>
+</html>
