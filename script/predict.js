@@ -100,7 +100,7 @@ document.getElementById('predict-btn').addEventListener('click', async function 
 
         const finalEl = document.getElementById('final-result');
         finalEl.innerHTML = `
-            <strong>Final Prediction:</strong> ${finalPrediction}<br>
+            <strong> </strong> ${finalPrediction}<br>
             <small>Average Confidence: ${avgConfidence}%</small>
         `;
 
