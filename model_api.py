@@ -14,7 +14,7 @@ MODEL = "coffee_model.h5"
 if not os.path.exists(MODEL):
     raise FileNotFoundError(f"{MODEL} not found")
 model = load_model(MODEL)
-print("✅ Loaded model:", MODEL)
+print("Loaded model:", MODEL)
 
 # Preprocessing function
 def preprocess_pil_image(file_stream, target_size=(224, 224), normalize=True):
