@@ -1,10 +1,33 @@
-// script/predict.js — Simplified results + color on final prediction only
+// script/predict.js — Fully revised and fixed
 
 const FLASK_API = 'http://127.0.0.1:5000/predict';
-const uploadedImages = { leaves: null, bark: null, cherries: null };
+
+// Map uploaded images by organ
+const uploadedImages = { leaf: null, bark: null, cherry: null };
+
+// Map organ keys to their HTML result element IDs
+const organToResultId = {
+    leaf: 'leaves-result',
+    bark: 'bark-result',
+    cherry: 'cherries-result'
+};
+
+// Map organ keys to their preview IDs
+const organToPreviewId = {
+    leaf: 'leaves-preview',
+    bark: 'bark-preview',
+    cherry: 'cherries-preview'
+};
+
+// Map organ keys to placeholder text for clear button
+const organToPlaceholder = {
+    leaf: 'Leaves',
+    bark: 'Bark',
+    cherry: 'Cherries'
+};
 
 // === File Upload Setup ===
-function setupFileUpload(inputId, previewId, type) {
+function setupFileUpload(inputId, previewId, organ) {
     const input = document.getElementById(inputId);
     const preview = document.getElementById(previewId);
 
@@ -13,47 +36,64 @@ function setupFileUpload(inputId, previewId, type) {
         if (file) {
             const reader = new FileReader();
             reader.onload = ev => {
-                uploadedImages[type] = file;
+                uploadedImages[organ] = file;
                 preview.style.backgroundImage = `url('${ev.target.result}')`;
                 preview.style.backgroundSize = 'cover';
                 preview.style.backgroundPosition = 'center';
                 preview.innerHTML = '';
                 checkIfReadyToPredict();
+                console.log(`[DEBUG] ${organ} file uploaded: ${file.name}`);
             };
             reader.readAsDataURL(file);
         }
     });
 }
 
-['leaves', 'bark', 'cherries'].forEach(type =>
-    setupFileUpload(`${type}-upload`, `${type}-preview`, type)
-);
+// Setup uploads
+setupFileUpload('leaves-upload', 'leaves-preview', 'leaf');
+setupFileUpload('bark-upload', 'bark-preview', 'bark');
+setupFileUpload('cherries-upload', 'cherries-preview', 'cherry');
 
+// Enable predict button only if at least one file is uploaded
 function checkIfReadyToPredict() {
-    const ready = uploadedImages.leaves || uploadedImages.bark || uploadedImages.cherries;
+    const ready = uploadedImages.leaf || uploadedImages.bark || uploadedImages.cherry;
     document.getElementById('predict-btn').disabled = !ready;
 }
 
 // === Flask Prediction Function ===
 async function getPredictionsFromFlask() {
-    const formData = new FormData();
-    Object.entries(uploadedImages).forEach(([type, file]) => {
-        if (file) formData.append('files', file);
-    });
+    const results = [];
 
-    const response = await fetch(FLASK_API, {
-        method: 'POST',
-        body: formData
-    });
+    for (const [organ, file] of Object.entries(uploadedImages)) {
+        if (!file) continue;
 
-    if (!response.ok) throw new Error(`Flask returned HTTP ${response.status}`);
-    const data = await response.json();
+        const formData = new FormData();
+        formData.append('files', file);
+        formData.append('organ', organ);
 
-    console.log('🧠 Flask Prediction Response:', data);
-    if (!data.results || data.results.length === 0)
-        throw new Error('No results field in Flask response');
+        console.log(`[DEBUG] Sending ${organ}: ${file.name}`);
 
-    return data.results;
+        const response = await fetch(FLASK_API, { method: 'POST', body: formData });
+
+        if (!response.ok) throw new Error(`Flask returned HTTP ${response.status}`);
+
+        let data;
+        try {
+            data = await response.json();
+        } catch (err) {
+            const text = await response.text();
+            console.error('❌ JSON parse failed:', err, 'Raw response:', text);
+            throw new Error('Invalid JSON from Flask');
+        }
+
+        if (!data.results || data.results.length === 0) {
+            throw new Error('No results returned from Flask for organ: ' + organ);
+        }
+
+        results.push(data.results[0]);
+    }
+
+    return results;
 }
 
 // === Predict Button Handler ===
@@ -64,57 +104,46 @@ document.getElementById('predict-btn').addEventListener('click', async function 
 
     try {
         const results = await getPredictionsFromFlask();
+        if (results.length === 0) throw new Error('No predictions returned from Flask');
 
-        const types = ['leaves', 'bark', 'cherries'];
+        let totalLiberica = 0;
         let totalConfidence = 0;
-        let count = 0;
 
-        // Display per section
-        results.forEach((result, index) => {
-            const id = types[index];
-            if (!id) return;
+        results.forEach(result => {
+            const organ = result.organ;
+            const resultEl = document.getElementById(organToResultId[organ]);
+            if (!resultEl) return console.warn(`[WARN] Missing element for ${organ}`);
 
-            const resultEl = document.getElementById(`${id}-result`);
-            const liberica = (result.liberica_prob * 100).toFixed(2);
-            const notLiberica = (result.not_liberica_prob * 100).toFixed(2);
+            const liberica = Number((result.liberica_prob * 100).toFixed(2));
+            const notLiberica = Number((result.not_liberica_prob * 100).toFixed(2));
 
             const isLiberica = result.predicted_class === "Liberica";
             const confidence = isLiberica ? liberica : notLiberica;
-            totalConfidence += parseFloat(confidence);
-            count++;
 
-            resultEl.innerHTML = `
-                <strong>${id.charAt(0).toUpperCase() + id.slice(1)}:</strong>
-                ${result.predicted_class} ${confidence}%
-            `;
+            totalLiberica += liberica;
+            totalConfidence += confidence;
 
-            // No background color on individual cards
+            resultEl.innerHTML = `<strong>${organToPlaceholder[organ]}:</strong> ${result.predicted_class} ${confidence}%`;
             resultEl.style.backgroundColor = '';
             resultEl.style.borderLeft = '';
         });
 
-        // Compute final prediction and average confidence
-        const avgLiberica = results.reduce((sum, r) => sum + r.liberica_prob, 0) / results.length;
-        const finalPrediction = avgLiberica >= 0.5 ? 'Liberica' : 'Not Liberica';
+        // Ensemble final prediction
+        const count = results.length;
+        const avgLibericaProb = totalLiberica / count;
+        const finalPrediction = avgLibericaProb >= 50 ? 'Liberica' : 'Not Liberica';
         const avgConfidence = (totalConfidence / count).toFixed(2);
 
         const finalEl = document.getElementById('final-result');
-        finalEl.innerHTML = `
-            <strong> </strong> ${finalPrediction}<br>
-            <small>Average Confidence: ${avgConfidence}%</small>
-        `;
-
-        // Apply color to final result only
+        finalEl.innerHTML = `<strong>Final Prediction:</strong> ${finalPrediction}<br><small>Average Confidence: ${avgConfidence}%</small>`;
         finalEl.style.backgroundColor = finalPrediction === 'Liberica' ? '#e6f7e6' : '#ffeaea';
-        finalEl.style.borderLeft = finalPrediction === 'Liberica'
-            ? '6px solid #2e7d32'
-            : '6px solid #c62828';
+        finalEl.style.borderLeft = finalPrediction === 'Liberica' ? '6px solid #2e7d32' : '6px solid #c62828';
         finalEl.style.transition = '0.3s';
 
         console.log('✅ Prediction displayed successfully!');
     } catch (error) {
         console.error('❌ Prediction failed:', error);
-        alert('Prediction failed. Please ensure Flask is running and reachable.');
+        alert('Prediction failed. Check console for details.');
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<span class="material-symbols-outlined">auto_awesome</span><span>Start Prediction</span>';
@@ -123,22 +152,29 @@ document.getElementById('predict-btn').addEventListener('click', async function 
 
 // === Clear Button ===
 document.getElementById('clear-btn').addEventListener('click', () => {
-    Object.keys(uploadedImages).forEach(key => (uploadedImages[key] = null));
+    Object.keys(uploadedImages).forEach(key => uploadedImages[key] = null);
 
-    ['leaves', 'bark', 'cherries'].forEach(id => {
-        const preview = document.getElementById(`${id}-preview`);
-        preview.style.backgroundImage = '';
-        preview.innerHTML = id.charAt(0).toUpperCase() + id.slice(1);
-        const resultEl = document.getElementById(`${id}-result`);
-        resultEl.textContent = '--';
-        resultEl.style.backgroundColor = '';
-        resultEl.style.borderLeft = '';
+    Object.entries(organToPreviewId).forEach(([organ, previewId]) => {
+        const preview = document.getElementById(previewId);
+        if (preview) {
+            preview.style.backgroundImage = '';
+            preview.innerHTML = organToPlaceholder[organ]; // ✅ fixed placeholder text
+        }
+
+        const resultEl = document.getElementById(organToResultId[organ]);
+        if (resultEl) {
+            resultEl.textContent = '--';
+            resultEl.style.backgroundColor = '';
+            resultEl.style.borderLeft = '';
+        }
     });
 
     const finalEl = document.getElementById('final-result');
-    finalEl.textContent = 'Awaiting analysis...';
-    finalEl.style.backgroundColor = '';
-    finalEl.style.borderLeft = '';
+    if (finalEl) {
+        finalEl.textContent = 'Awaiting analysis...';
+        finalEl.style.backgroundColor = '';
+        finalEl.style.borderLeft = '';
+    }
 
     document.getElementById('predict-btn').disabled = true;
 });
