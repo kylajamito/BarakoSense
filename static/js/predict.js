@@ -1,5 +1,3 @@
-// script/predict.js — Fully revised and fixed
-
 const FLASK_API = '/predict';
 
 
