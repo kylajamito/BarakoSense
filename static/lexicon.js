@@ -1,6 +1,6 @@
 // script/lexicon.js - Database Integration for Lexicon Page
 
-const API_URL = 'http://localhost:3000/api';
+const FLASK_API = '/predict';
 
 // Pagination settings
 let currentPage = 1;
