@@ -1,9 +1,10 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from tensorflow.keras.models import load_model
 from PIL import Image
 import numpy as np
 import io, os
 from flask_cors import CORS
+
 
 app = Flask(__name__)
 CORS(app)
@@ -40,6 +41,22 @@ def preprocess_pil_image(file_stream, target_size=(224, 224)):
 
     arr = np.expand_dims(arr, axis=0)
     return arr, stats
+
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+
+@app.route("/predict")
+def predict_page():
+    return render_template("predict.html")
+
+
+@app.route("/lexicon")
+def lexicon_page():
+    return render_template("lexicon.html")
+
 
 # =========================
 # Prediction Route
