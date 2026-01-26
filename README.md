@@ -1,6 +1,6 @@
 # BarakoSense - Coffee Liberica Authenticity Classifier
 
---- updating
+---
 
 ## **Pre-requisites**
 
