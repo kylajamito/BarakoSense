@@ -1,6 +1,5 @@
-// script/predict.js — Fully revised and fixed
+const FLASK_API = '/predict';
 
-const FLASK_API = 'http://127.0.0.1:5000/predict';
 
 // Map uploaded images by organ
 const uploadedImages = { leaf: null, bark: null, cherry: null };
