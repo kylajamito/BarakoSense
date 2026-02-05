@@ -12,9 +12,9 @@ CORS(app)
 # Load Models
 # =========================
 MODEL_PATHS = {
-    "leaf": "leaf_MobileNetV2_80-20_model.keras",
-    "bark": "bark_MobileNetV2_80-20_model.keras",
-    "cherry": "cherry_MobileNetV2_80-20_model.keras"
+    "leaf": "models/leaf_MobileNetV2_80-20_model.keras",
+    "bark": "models/bark_MobileNetV2_80-20_model.keras",
+    "cherry": "models/cherry_MobileNetV2_80-20_model.keras"
 }
 
 MODELS = {}
