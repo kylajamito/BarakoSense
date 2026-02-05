@@ -5,12 +5,11 @@ import numpy as np
 import io, os
 from flask_cors import CORS
 
-
 app = Flask(__name__)
 CORS(app)
 
 # =========================
-# Load Keras Models
+# Load Models
 # =========================
 MODEL_PATHS = {
     "leaf": "leaf_MobileNetV2_80-20_model.keras",
@@ -23,101 +22,74 @@ for organ, path in MODEL_PATHS.items():
     if not os.path.exists(path):
         raise FileNotFoundError(f"{path} not found")
     MODELS[organ] = load_model(path)
-    print(f"[INFO] Loaded {organ} model → {path}")
+    print(f"[INFO] Loaded {organ} model")
 
 # =========================
 # Image Preprocessing
 # =========================
-def preprocess_pil_image(file_stream, target_size=(224, 224)):
-    img = Image.open(io.BytesIO(file_stream)).convert('RGB')
+def preprocess_pil_image(file_bytes, target_size=(224, 224)):
+    img = Image.open(io.BytesIO(file_bytes)).convert("RGB")
     img = img.resize(target_size)
 
-    arr = np.array(img).astype('float32') / 255.0
-    stats = {
-        'min': float(arr.min()),
-        'max': float(arr.max()),
-        'mean': float(arr.mean())
-    }
-
+    arr = np.array(img).astype("float32") / 255.0
     arr = np.expand_dims(arr, axis=0)
-    return arr, stats
+    return arr
 
-
+# =========================
+# Routes
+# =========================
 @app.route("/")
 def home():
     return render_template("index.html")
 
-
-@app.route("/predict")
-def predict_page():
-    return render_template("predict.html")
-
-
-@app.route("/lexicon")
-def lexicon_page():
-    return render_template("lexicon.html")
-
-
-# =========================
-# Prediction Route
-# =========================
-@app.route('/predict', methods=['POST'])
+@app.route("/predict", methods=["GET", "POST"])
 def predict():
+    # -------------------------
+    # GET → show predict page
+    # -------------------------
+    if request.method == "GET":
+        return render_template("predict.html")
 
-    if 'files' not in request.files:
-        return jsonify({'error': 'No files uploaded'}), 400
+    # -------------------------
+    # POST → run inference
+    # -------------------------
+    if "file" not in request.files:
+        return jsonify({"error": "No image uploaded"}), 400
 
-    organ = request.form.get('organ')  # leaf | bark | cherry
-    if organ not in MODELS:
-        return jsonify({
-            'error': 'Invalid or missing organ type',
-            'expected': ['leaf', 'bark', 'cherry']
-        }), 400
+    file = request.files["file"]
+    raw = file.read()
+    arr = preprocess_pil_image(raw)
 
-    model = MODELS[organ]
-    files = request.files.getlist('files')
-    results = []
+    model_results = []
 
-    for file in files:
-        fname = file.filename
-        raw = file.read()
-        arr, stats = preprocess_pil_image(raw)
-
-        # Model prediction
+    for organ, model in MODELS.items():
         pred = model.predict(arr, verbose=0)
 
-        # Convert NumPy prediction to JSON-serializable list
-        pred_list = pred.tolist()
-
-        # --- Correct probability interpretation ---
-        # Assuming the model outputs Liberica probability directly
         liberica_prob = float(pred[0][0])
         not_liberica_prob = 1.0 - liberica_prob
 
         predicted_class = "Liberica" if liberica_prob >= 0.5 else "Not Liberica"
+        confidence = max(liberica_prob, not_liberica_prob)
 
-        print(
-            f"[DEBUG] {organ.upper()} | {fname} → "
-            f"Liberica={liberica_prob:.4f}, "
-            f"NotLiberica={not_liberica_prob:.4f}"
-        )
-
-        results.append({
-            'filename': fname,
-            'predicted_class': predicted_class,
-            'liberica_prob': liberica_prob,
-            'not_liberica_prob': not_liberica_prob,
-            'organ': organ,  # essential for JS
-            'preprocess_stats': stats,
-            'pred_shape': list(pred.shape),
-            'pred_array': pred_list
+        model_results.append({
+            "organ": organ,
+            "predicted_class": predicted_class,
+            "confidence": round(confidence * 100, 2)
         })
 
-    return jsonify({'results': results})
+    # Arbitration → highest confidence wins
+    best = max(model_results, key=lambda x: x["confidence"])
+
+    return jsonify({
+        "final_prediction": best["predicted_class"],
+        "detected_plant_part": best["organ"].capitalize(),
+        "confidence": best["confidence"],
+        "all_model_outputs": model_results
+    })
 
 # =========================
 # Run Server
 # =========================
-if __name__ == '__main__':
-    print("Starting BarakoSense API on http://127.0.0.1:5000")
+if __name__ == "__main__":
+    print("🚀 BarakoSense running at http://127.0.0.1:5000")
     app.run(port=5000, debug=False)

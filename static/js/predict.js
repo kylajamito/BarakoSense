@@ -1,179 +1,153 @@
-const FLASK_API = '/predict';
+const FLASK_API = "/predict";
+let uploadedFile = null;
 
+// =========================
+// Elements
+// =========================
+const uploadInput = document.getElementById("image-upload");
+const previewBox = document.getElementById("image-preview");
+const predictBtn = document.getElementById("predict-btn");
+const clearBtn = document.getElementById("clear-btn");
+const finalResult = document.getElementById("final-result");
 
-// Map uploaded images by organ
-const uploadedImages = { leaf: null, bark: null, cherry: null };
+// =========================
+// Upload + Preview
+// =========================
 
-// Map organ keys to their HTML result element IDs
-const organToResultId = {
-    leaf: 'leaves-result',
-    bark: 'bark-result',
-    cherry: 'cherries-result'
-};
+function setPreviewPlaceholder() {
+  previewBox.innerHTML = `
+    <input
+      id="image-upload"
+      type="file"
+      accept="image/*"
+      class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+    />
+    <div class="flex flex-col items-center gap-1 pointer-events-none group-hover:scale-105 transition-transform">
+      <span class="material-symbols-outlined text-3xl text-primary animate-bounce group-hover:animate-none">
+        cloud_upload
+      </span>
+      <p class="font-medium text-xs">Click or drag image here</p>
+    </div>
+  `;
+  // Re-attach input event
+  const newInput = previewBox.querySelector('#image-upload');
+  newInput.addEventListener("change", handleFileInput);
+}
 
-// Map organ keys to their preview IDs
-const organToPreviewId = {
-    leaf: 'leaves-preview',
-    bark: 'bark-preview',
-    cherry: 'cherries-preview'
-};
+function handleFileInput(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  uploadedFile = file;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    previewBox.innerHTML = `
+      <div class="relative w-full h-full">
+        <input
+          id="image-upload"
+          type="file"
+          accept="image/*"
+          class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+        />
+        <img src="${ev.target.result}"
+             class="w-full h-full object-cover rounded-lg" />
+      </div>
+    `;
+    // Re-attach input event
+    const newInput = previewBox.querySelector('#image-upload');
+    newInput.addEventListener("change", handleFileInput);
+  };
+  reader.readAsDataURL(file);
+  predictBtn.disabled = false;
+  finalResult.innerText = "Ready for prediction";
+}
 
-// Map organ keys to placeholder text for clear button
-const organToPlaceholder = {
-    leaf: 'Leaves',
-    bark: 'Bark',
-    cherry: 'Cherries'
-};
+// Initial placeholder
+setPreviewPlaceholder();
 
-// === File Upload Setup ===
-function setupFileUpload(inputId, previewId, organ) {
-    const input = document.getElementById(inputId);
-    const preview = document.getElementById(previewId);
+// Drag-and-drop support
+function handleDrop(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  const dt = e.dataTransfer;
+  if (dt && dt.files && dt.files.length > 0) {
+    const fileInput = previewBox.querySelector('#image-upload');
+    // Set file input's files property
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(dt.files[0]);
+    fileInput.files = dataTransfer.files;
+    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  previewBox.classList.remove('ring-4', 'ring-primary');
+}
+function handleDragOver(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  previewBox.classList.add('ring-4', 'ring-primary');
+}
+function handleDragLeave(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  previewBox.classList.remove('ring-4', 'ring-primary');
+}
+previewBox.addEventListener('dragover', handleDragOver);
+previewBox.addEventListener('dragleave', handleDragLeave);
+previewBox.addEventListener('drop', handleDrop);
 
-    input.addEventListener('change', e => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = ev => {
-                uploadedImages[organ] = file;
-                preview.style.backgroundImage = `url('${ev.target.result}')`;
-                preview.style.backgroundSize = 'cover';
-                preview.style.backgroundPosition = 'center';
-                preview.innerHTML = '';
-                checkIfReadyToPredict();
-                console.log(`[DEBUG] ${organ} file uploaded: ${file.name}`);
-            };
-            reader.readAsDataURL(file);
-        }
+// Also re-attach drag events after every clear or upload
+const observer = new MutationObserver(() => {
+  previewBox.addEventListener('dragover', handleDragOver);
+  previewBox.addEventListener('dragleave', handleDragLeave);
+  previewBox.addEventListener('drop', handleDrop);
+});
+observer.observe(previewBox, { childList: true });
+
+// Remove old uploadInput event (if any)
+// Add new event to dynamic input
+// (handled in setPreviewPlaceholder and handleFileInput)
+
+// =========================
+// Predict
+// =========================
+predictBtn.addEventListener("click", async () => {
+  if (!uploadedFile) return;
+
+  predictBtn.disabled = true;
+  predictBtn.innerText = "Analyzing...";
+  finalResult.innerText = "Running inference...";
+
+  const formData = new FormData();
+  formData.append("file", uploadedFile);
+
+  try {
+    const response = await fetch(FLASK_API, {
+      method: "POST",
+      body: formData,
     });
-}
 
-// Setup uploads
-setupFileUpload('leaves-upload', 'leaves-preview', 'leaf');
-setupFileUpload('bark-upload', 'bark-preview', 'bark');
-setupFileUpload('cherries-upload', 'cherries-preview', 'cherry');
-
-// Enable predict button only if at least one file is uploaded
-function checkIfReadyToPredict() {
-    const ready = uploadedImages.leaf || uploadedImages.bark || uploadedImages.cherry;
-    document.getElementById('predict-btn').disabled = !ready;
-}
-
-// === Flask Prediction Function ===
-async function getPredictionsFromFlask() {
-    const results = [];
-
-    for (const [organ, file] of Object.entries(uploadedImages)) {
-        if (!file) continue;
-
-        const formData = new FormData();
-        formData.append('files', file);
-        formData.append('organ', organ);
-
-        console.log(`[DEBUG] Sending ${organ}: ${file.name}`);
-
-        const response = await fetch(FLASK_API, { method: 'POST', body: formData });
-
-        if (!response.ok) throw new Error(`Flask returned HTTP ${response.status}`);
-
-        let data;
-        try {
-            data = await response.json();
-        } catch (err) {
-            const text = await response.text();
-            console.error('❌ JSON parse failed:', err, 'Raw response:', text);
-            throw new Error('Invalid JSON from Flask');
-        }
-
-        if (!data.results || data.results.length === 0) {
-            throw new Error('No results returned from Flask for organ: ' + organ);
-        }
-
-        results.push(data.results[0]);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
     }
 
-    return results;
-}
+    const data = await response.json();
 
-// === Predict Button Handler ===
-document.getElementById('predict-btn').addEventListener('click', async function () {
-    const btn = this;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="material-symbols-outlined animate-spin">autorenew</span><span>Analyzing...</span>';
+    finalResult.innerText =
+      `${data.final_prediction} (${data.confidence}%) — ${data.detected_plant_part}`;
 
-    try {
-        const results = await getPredictionsFromFlask();
-        if (results.length === 0) throw new Error('No predictions returned from Flask');
-
-        let totalLiberica = 0;
-        let totalConfidence = 0;
-
-        results.forEach(result => {
-            const organ = result.organ;
-            const resultEl = document.getElementById(organToResultId[organ]);
-            if (!resultEl) return console.warn(`[WARN] Missing element for ${organ}`);
-
-            const liberica = Number((result.liberica_prob * 100).toFixed(2));
-            const notLiberica = Number((result.not_liberica_prob * 100).toFixed(2));
-
-            const isLiberica = result.predicted_class === "Liberica";
-            const confidence = isLiberica ? liberica : notLiberica;
-
-            totalLiberica += liberica;
-            totalConfidence += confidence;
-
-            resultEl.innerHTML = `<strong>${organToPlaceholder[organ]}:</strong> ${result.predicted_class} ${confidence}%`;
-            resultEl.style.backgroundColor = '';
-            resultEl.style.borderLeft = '';
-        });
-
-        // Ensemble final prediction
-        const count = results.length;
-        const avgLibericaProb = totalLiberica / count;
-        const finalPrediction = avgLibericaProb >= 50 ? 'Liberica' : 'Not Liberica';
-        const avgConfidence = (totalConfidence / count).toFixed(2);
-
-        const finalEl = document.getElementById('final-result');
-        finalEl.innerHTML = `<strong>Final Prediction:</strong> ${finalPrediction}<br><small>Average Confidence: ${avgConfidence}%</small>`;
-        finalEl.style.backgroundColor = finalPrediction === 'Liberica' ? '#e6f7e6' : '#ffeaea';
-        finalEl.style.borderLeft = finalPrediction === 'Liberica' ? '6px solid #2e7d32' : '6px solid #c62828';
-        finalEl.style.transition = '0.3s';
-
-        console.log('✅ Prediction displayed successfully!');
-    } catch (error) {
-        console.error('❌ Prediction failed:', error);
-        alert('Prediction failed. Check console for details.');
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<span class="material-symbols-outlined">auto_awesome</span><span>Start Prediction</span>';
-    }
+  } catch (err) {
+    console.error(err);
+    finalResult.innerText = "Prediction failed.";
+  } finally {
+    predictBtn.disabled = false;
+    predictBtn.innerText = "Start Prediction";
+  }
 });
 
-// === Clear Button ===
-document.getElementById('clear-btn').addEventListener('click', () => {
-    Object.keys(uploadedImages).forEach(key => uploadedImages[key] = null);
-
-    Object.entries(organToPreviewId).forEach(([organ, previewId]) => {
-        const preview = document.getElementById(previewId);
-        if (preview) {
-            preview.style.backgroundImage = '';
-            preview.innerHTML = organToPlaceholder[organ]; // ✅ fixed placeholder text
-        }
-
-        const resultEl = document.getElementById(organToResultId[organ]);
-        if (resultEl) {
-            resultEl.textContent = '--';
-            resultEl.style.backgroundColor = '';
-            resultEl.style.borderLeft = '';
-        }
-    });
-
-    const finalEl = document.getElementById('final-result');
-    if (finalEl) {
-        finalEl.textContent = 'Awaiting analysis...';
-        finalEl.style.backgroundColor = '';
-        finalEl.style.borderLeft = '';
-    }
-
-    document.getElementById('predict-btn').disabled = true;
+// =========================
+// Clear
+// =========================
+clearBtn.addEventListener("click", () => {
+  uploadedFile = null;
+  setPreviewPlaceholder();
+  finalResult.innerText = "Awaiting analysis...";
+  predictBtn.disabled = true;
 });
