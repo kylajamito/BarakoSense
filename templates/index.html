@@ -122,19 +122,22 @@
   </footer>
 
   <script>
-    // Highlight active navbar link
-    document.addEventListener("DOMContentLoaded", () => {
-      const currentPage = window.location.pathname.split("/").pop();
-      const links = document.querySelectorAll("nav a");
-      links.forEach(link => {
-        const href = link.getAttribute("href");
-        if (href === currentPage) {
-          link.classList.add("text-primary", "font-bold");
-        } else {
-          link.classList.remove("text-primary", "font-bold");
-        }
-      });
+  // Highlight active navbar link
+  document.addEventListener("DOMContentLoaded", () => {
+    const currentPath = window.location.pathname;
+    const links = document.querySelectorAll("nav a");
+    
+    links.forEach(link => {
+      const href = link.getAttribute("href");
+      
+      // Check if current path matches the link
+      if (currentPath === href || (currentPath === "/" && href === "/")) {
+        link.classList.add("text-primary", "font-bold");
+      } else {
+        link.classList.remove("text-primary", "font-bold");
+      }
     });
-  </script>
+  });
+</script>
 </body>
 </html>

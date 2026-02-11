@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-  <title>BarakoSense - Lexicon</title>
+  <title>BarakoSense - Predict</title>
 
   <!-- TailwindCSS -->
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
@@ -67,6 +67,31 @@
       -ms-overflow-style: none;  /* IE and Edge */
       scrollbar-width: none;  /* Firefox */
     }
+
+    /* Modal backdrop animation */
+    .modal-backdrop {
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-content {
+      animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+      from { 
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
   </style>
 </head>
 
@@ -84,122 +109,378 @@
           </div>
           <nav class="hidden md:flex items-center gap-6 text-sm font-medium">
             <a class="hover:text-primary transition-colors" href="/">Home</a>
-            <a class="hover:text-primary transition-colors" href="/predict">Predict</a>
-            <a class="text-primary font-bold" href="/lexicon">Lexicon</a>
+            <a id="nav-predict" class="hover:text-primary transition-colors" href="/predict">Predict</a>
+            <a class="hover:text-primary transition-colors" href="/lexicon">Lexicon</a>
           </nav>
         </div>
       </div>
     </header>
 
-  <!-- MAIN -->
-<main class="flex-grow flex items-center justify-center p-4 sm:p-8">
-  <div class="w-full max-w-md bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-2xl p-4 sm:p-6 shadow-lg flex flex-col gap-4 mx-auto">
-
-    <!-- HEADER & UPLOAD -->
-    <div class="space-y-4">
-      <div>
-        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-1 text-center">
-          Identify Your Coffee Plant
-        </h2>
-        <p class="mt-1 text-sm sm:text-base text-text-muted-light dark:text-text-muted-dark text-center">
-          Upload an image of a coffee leaf, bark, or cherry. The system will automatically identify the plant part.
-        </p>
-      </div>
-
-      <!-- SINGLE UPLOAD + PREVIEW BOX -->
-      <div class="space-y-2">
-        <div class="flex items-center gap-2 justify-center">
-          <h3 class="text-base font-semibold">Upload Image</h3>
-          <span class="relative group cursor-pointer">
-            <span class="material-symbols-outlined text-base text-primary align-middle">help</span>
-            <span class="absolute left-1/2 -translate-x-1/2 mt-2 w-40 bg-surface-light dark:bg-surface-dark text-xs text-text-light dark:text-text-dark rounded-lg shadow-lg p-2 opacity-0 group-hover:opacity-100 transition-opacity z-20 pointer-events-none">
-              Supported: JPG, PNG, GIF. Max 5MB. Drag & drop or click to select.
-            </span>
-          </span>
+    <!-- WELCOME MODAL -->
+    <div id="welcome-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm modal-backdrop">
+      <div class="bg-surface-light dark:bg-surface-dark rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto mx-4 p-6 sm:p-8 border-2 border-primary/30 modal-content">
+        <!-- Modal Header -->
+        <div class="flex items-start justify-between mb-4">
+          <div class="flex items-center gap-3">
+            <div class="bg-primary/20 p-2 rounded-xl">
+              <span class="material-symbols-outlined text-2xl text-primary">info</span>
+            </div>
+            <div>
+              <h2 class="text-xl font-bold text-primary">How to Use BarakoSense</h2>
+              <p class="text-xs text-text-muted-light dark:text-text-muted-dark">Quick guide to get started</p>
+            </div>
+          </div>
+          <button id="close-modal" class="text-text-muted-light dark:text-text-muted-dark hover:text-primary transition-colors">
+            <span class="material-symbols-outlined text-2xl">close</span>
+          </button>
         </div>
 
-        <div
-          id="image-preview"
-          class="relative w-full max-w-xs mx-auto aspect-square border-2 border-dashed border-border-light dark:border-border-dark rounded-xl
-                 flex items-center justify-center text-base text-text-muted-light dark:text-text-muted-dark
-                 hover:border-primary hover:bg-primary/20 dark:hover:bg-primary/30 transition-all cursor-pointer bg-primary/10 dark:bg-primary/20 shadow-inner group"
-          style="height: 180px; min-height: 120px; max-height: 220px;"
-        >
-          <input
-            id="image-upload"
-            type="file"
-            accept="image/*"
-            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-          />
+        <!-- Modal Content -->
+        <div class="space-y-4">
+          <!-- Step 1 -->
+          <div class="flex gap-4">
+            <div class="flex-shrink-0 w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center font-bold text-lg">
+              1
+            </div>
+            <div>
+              <h3 class="font-bold text-lg mb-1">Upload an Image</h3>
+              <p class="text-sm text-text-muted-light dark:text-text-muted-dark">
+                Click or drag and drop an image of a <strong>Coffea Liberica (Kapeng Barako)</strong> tree part into the upload area. Make sure the image is clear and well-lit for best results.
+              </p>
+            </div>
+          </div>
 
-          <!-- Placeholder (replaced by JS when image loads) -->
-          <div class="flex flex-col items-center gap-1 pointer-events-none group-hover:scale-105 transition-transform">
-            <span class="material-symbols-outlined text-3xl text-primary animate-bounce group-hover:animate-none">
-              cloud_upload
-            </span>
-            <p class="font-medium text-xs">Click or drag image here</p>
+          <!-- Step 2 -->
+          <div class="flex gap-4">
+            <div class="flex-shrink-0 w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center font-bold text-lg">
+              2
+            </div>
+            <div>
+              <h3 class="font-bold text-lg mb-1">Supported Images</h3>
+              <p class="text-sm text-text-muted-light dark:text-text-muted-dark mb-2">
+                You can upload photos of any visible part of the Liberica plant, such as:
+              </p>
+
+              <div class="grid grid-cols-3 gap-2">
+                
+                <!-- Leaf -->
+                <div class="bg-primary/10 dark:bg-primary/20 rounded-lg p-2 text-center border border-primary/30">
+                  <img src="static/icons/leaf_nobg.svg" alt="Leaf" class="w-15 h-15 mx-auto mb-1">
+                  <p class="font-semibold text-xs">Leaf</p>
+                </div>
+
+                <!-- Bark -->
+                <div class="bg-primary/10 dark:bg-primary/20 rounded-lg p-2 text-center border border-primary/30">
+                  <img src="static/icons/bark_nobg.svg" alt="Bark" class="w-15 h-15 mx-auto mb-1">
+                  <p class="font-semibold text-xs">Bark</p>
+                </div>
+
+                <!-- Cherry -->
+                <div class="bg-primary/10 dark:bg-primary/20 rounded-lg p-2 text-center border border-primary/30">
+                  <img src="static/icons/cherry_nobg.svg" alt="Cherry" class="w-15 h-15 mx-auto mb-1">
+                  <p class="font-semibold text-xs">Cherry</p>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="flex gap-4">
+            <div class="flex-shrink-0 w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center font-bold text-lg">
+              3
+            </div>
+            <div>
+              <h3 class="font-bold text-lg mb-1">Get Results</h3>
+              <p class="text-sm text-text-muted-light dark:text-text-muted-dark">
+                Click <strong>"Start Prediction"</strong> and our AI will automatically:
+              </p>
+              <ul class="list-disc list-inside mt-1 space-y-0.5 text-sm text-text-muted-light dark:text-text-muted-dark">
+                <li>Analyze the uploaded image</li>
+                <li>Determine if it's Liberica or not</li>
+                <li>Show the confidence level of the prediction</li>
+              </ul>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- PREDICTION RESULT BELOW UPLOAD -->
-    <div class="space-y-2">
-      <h3 class="text-xl font-bold mb-1 text-center">Prediction Results</h3>
-      <div class="bg-primary/10 dark:bg-primary/20 rounded-xl p-3 border border-primary shadow flex flex-col gap-1 items-center min-h-[60px] relative max-w-xs mx-auto">
-        <p class="text-xs text-text-muted-light dark:text-text-muted-dark mb-0.5">Final Prediction</p>
-        <p id="final-result" class="text-lg font-extrabold text-primary text-center">
-          Awaiting analysis...
-        </p>
-        <!-- Loader placeholder (show via JS during prediction) -->
-        <div id="loader" class="hidden absolute inset-0 flex items-center justify-center bg-primary/10 dark:bg-primary/20 rounded-xl">
-          <svg class="animate-spin h-6 w-6 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-          </svg>
+        <!-- Modal Footer -->
+        <div class="mt-6 flex justify-end">
+          <button id="got-it-btn" class="px-6 py-2.5 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-all transform hover:scale-105 shadow-lg">
+            Got it, Let's Start!
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- BUTTONS -->
-    <div class="flex flex-col sm:flex-row gap-2 mt-2">
-      <button
-        id="predict-btn"
-        disabled
-        class="w-full flex items-center justify-center gap-2 rounded-xl h-10 px-4
-               bg-primary text-background-dark font-bold text-base shadow-md transition-all
-               hover:scale-105 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <span class="material-symbols-outlined">auto_awesome</span>
-        Start Prediction
-      </button>
+    <!-- MAIN -->
+    <main class="flex-grow flex items-center justify-center p-4 sm:p-5">
+      <div class="w-full max-w-5xl">
+        <!-- Page Title -->
+        <div class="text-center mb-6">
+          <h1 class="text-3xl sm:text-4xl font-bold text-primary mb-2">
+            Coffee Plant Identifier
+          </h1>
+          <p class="text-text-muted-light dark:text-text-muted-dark">
+            Upload an image to identify Coffea Liberica (Kapeng Barako)
+          </p>
+        </div>
 
-      <button
-        id="clear-btn"
-        class="w-full flex items-center justify-center gap-2 rounded-xl h-10 px-4
-               bg-border-light dark:bg-border-dark text-text-light dark:text-text-dark font-semibold text-base
-               hover:bg-primary/20 dark:hover:bg-primary/30 transition-all hover:scale-105 shadow"
-      >
-        <span class="material-symbols-outlined">delete</span>
-        Clear Image
-      </button>
-    </div>
+        <!-- Two Column Layout -->
+        <div class="grid lg:grid-cols-2 gap-6">
+          
+          <!-- LEFT SIDE: UPLOAD AREA -->
+          <div class="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-2xl p-6 shadow-lg">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-xl font-bold">Upload Image</h2>
+              <span class="relative group cursor-pointer">
+                <span class="material-symbols-outlined text-xl text-primary">help</span>
+                <span class="absolute right-0 mt-2 w-48 bg-surface-light dark:bg-surface-dark text-xs text-text-light dark:text-text-dark rounded-lg shadow-lg p-2 opacity-0 group-hover:opacity-100 transition-opacity z-20 pointer-events-none border border-primary/20">
+                  Supported: JPG, PNG, GIF. Max 5MB. Drag & drop or click to select.
+                </span>
+              </span>
+            </div>
 
-    <p class="text-xs text-text-muted-light dark:text-text-muted-dark mt-1 text-center">
-      <span class="font-semibold">Disclaimer:</span> The model automatically determines whether the image contains a coffee leaf, bark, or cherry.
-    </p>
+            <!-- Upload Area -->
+            <div
+              id="image-preview"
+              class="relative w-full border-2 border-dashed border-border-light dark:border-border-dark rounded-xl
+                     flex items-center justify-center text-base text-text-muted-light dark:text-text-muted-dark
+                     hover:border-primary hover:bg-primary/20 dark:hover:bg-primary/30 transition-all cursor-pointer bg-primary/10 dark:bg-primary/20 shadow-inner group mb-4"
+              style="height: 260px;"
+            >
+              <input
+                id="image-upload"
+                type="file"
+                accept="image/*"
+                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              />
+
+              <!-- Placeholder -->
+              <div id="placeholder" class="flex flex-col items-center gap-3 pointer-events-none group-hover:scale-105 transition-transform">
+                <span class="material-symbols-outlined text-5xl text-primary animate-bounce group-hover:animate-none">
+                  cloud_upload
+                </span>
+                <div class="text-center">
+                  <p class="font-bold text-base mb-1">Click or drag image here</p>
+                  <p class="text-sm text-text-muted-light dark:text-text-muted-dark">
+                    Leaf, Bark, or Cherry images
+                  </p>
+                </div>
+              </div>
+
+              <!-- Image Preview (hidden by default, shown by JS) -->
+              <img id="preview-img" class="hidden absolute inset-0 w-full h-full object-contain rounded-xl" alt="Preview" />
+            </div>
+
+            <!-- Buttons -->
+            <div class="space-y-3">
+              <button
+                id="predict-btn"
+                disabled
+                class="w-full flex items-center justify-center gap-2 rounded-xl h-12 px-4
+                       bg-primary text-white font-bold text-base shadow-md transition-all
+                       hover:scale-105 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span class="material-symbols-outlined">auto_awesome</span>
+                Start Prediction
+              </button>
+
+              <button
+                id="clear-btn"
+                class="w-full flex items-center justify-center gap-2 rounded-xl h-12 px-4
+                       bg-border-light dark:bg-border-dark text-text-light dark:text-text-dark font-semibold text-base
+                       hover:bg-primary/20 dark:hover:bg-primary/30 transition-all hover:scale-105 shadow"
+              >
+                <span class="material-symbols-outlined">delete</span>
+                Clear Image
+              </button>
+            </div>
+          </div>
+
+          <!-- RIGHT SIDE: PREDICTION RESULTS -->
+          <div class="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-2xl p-6 shadow-lg flex flex-col">
+  
+          <!-- Card header -->
+          <h2 class="text-xl font-bold mb-4">Prediction Results</h2>
+
+          <!-- Main content that grows -->
+          <div class="flex-grow space-y-4">
+            <!-- Final Prediction Card -->
+            <div class="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10 rounded-xl p-4 border-2 border-primary shadow-lg">
+              <div class="text-center">
+                <p class="text-sm text-text-muted-light dark:text-text-muted-dark mb-2">Classification</p>
+                <p id="final-result" class="text-3xl font-extrabold text-primary mb-4">
+                  Awaiting Upload...
+                </p>
+                
+                <!-- Loader (hidden by default) -->
+                <div id="loader" class="hidden">
+                  <div class="flex items-center justify-center mb-2">
+                    <svg class="animate-spin h-6 w-6 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                    </svg>
+                  </div>
+                  <p class="text-sm text-primary font-semibold">Analyzing image...</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Confidence Level -->
+            <div class="bg-background-light dark:bg-background-dark rounded-lg p-4 border border-border-light dark:border-border-dark">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-primary">analytics</span>
+                  <span class="text-sm font-semibold">Confidence Level</span>
+                </div>
+                <span id="confidence" class="text-sm font-bold text-primary">-</span>
+              </div>
+              <div class="w-full bg-border-light dark:bg-border-dark rounded-full h-2.5">
+                <div id="confidence-bar" class="bg-primary h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <!-- Individual Model Results -->
+            <div class="bg-background-light dark:bg-background-dark rounded-lg p-3 border border-border-light dark:border-border-dark">
+              <div class="flex items-center gap-2 mb-3">
+                <span class="material-symbols-outlined text-primary">view_list</span>
+                <span class="text-sm font-semibold">Model Predictions</span>
+              </div>
+
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="font-medium">Leaf Model:</span>
+                  <span id="leaf-result" class="font-bold text-primary">-</span>
+                </div>
+
+                <div class="flex justify-between">
+                  <span class="font-medium">Bark Model:</span>
+                  <span id="bark-result" class="font-bold text-primary">-</span>
+                </div>
+
+                <div class="flex justify-between">
+                  <span class="font-medium">Cherry Model:</span>
+                  <span id="cherry-result" class="font-bold text-primary">-</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Help Section (stays pinned at bottom) -->
+          <div class="mt-4 text-center">
+            <button id="show-help" class="inline-flex items-center gap-2 text-sm text-text-muted-light dark:text-text-muted-dark hover:text-primary transition-colors">
+              <span class="material-symbols-outlined">help_outline</span>
+              <span>Need help? Click here to see upload instructions again</span>
+            </button>
+          </div>
+
+        </div>
+
+        </div>
+      </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-background-light dark:bg-background-dark border-t border-border-light dark:border-border-dark mt-10">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-sm text-text-muted-light dark:text-text-muted-dark">
+        © 2024 <span class="font-bold text-primary">BarakoSense</span>. All Rights Reserved.
+      </div>
+    </footer>
   </div>
-</main>
 
-<!-- FOOTER -->
-<footer class="bg-background-light dark:bg-background-dark border-t border-border-light dark:border-border-dark mt-10">
-  <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-sm text-text-muted-light dark:text-text-muted-dark">
-    © 2024 <span class="font-bold text-primary">BarakoSense</span>. All Rights Reserved.
-  </div>
-</footer>
+  <script>
+    // =========================
+    // Wait for DOM to be ready
+    // =========================
+    document.addEventListener("DOMContentLoaded", () => {
+      
+      // Highlight active navbar link
+      const currentPath = window.location.pathname;
+      const links = document.querySelectorAll("nav a");
+      
+      links.forEach(link => {
+        const href = link.getAttribute("href");
+        if (currentPath === href) {
+          link.classList.add("text-primary", "font-bold");
+        } else {
+          link.classList.remove("text-primary", "font-bold");
+        }
+      });
 
-</div>
+      // =========================
+      // Modal functionality
+      // =========================
+      const modal = document.getElementById('welcome-modal');
+      const closeModalBtn = document.getElementById('close-modal');
+      const gotItBtn = document.getElementById('got-it-btn');
+      const showHelpBtn = document.getElementById('show-help');
 
-<script src="{{ url_for('static', filename='js/predict.js') }}"></script>
+      // Check if user has seen the modal before
+      const hasSeenModal = localStorage.getItem('barakosense-modal-seen');
+
+      // Show modal on first visit
+      if (!hasSeenModal) {
+        modal.classList.remove('hidden');
+      } else {
+        modal.classList.add('hidden');
+      }
+
+      // Close modal function
+      function closeModal() {
+        modal.classList.add('hidden');
+        localStorage.setItem('barakosense-modal-seen', 'true');
+      }
+
+      // Event listeners for modal
+      closeModalBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeModal();
+      });
+      
+      gotItBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeModal();
+      });
+      
+      // Show help - reopen modal
+      showHelpBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        modal.classList.remove('hidden');
+      });
+
+      // Close modal when clicking outside
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          closeModal();
+        }
+      });
+
+      // Close modal with Escape key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+          closeModal();
+        }
+      });
+
+      // =========================
+      // Toggle detailed results
+      // =========================
+      const toggleDetailsBtn = document.getElementById('toggle-details');
+      const detailedResults = document.getElementById('detailed-results');
+      const toggleIcon = document.getElementById('toggle-icon');
+
+      toggleDetailsBtn.addEventListener('click', () => {
+        detailedResults.classList.toggle('hidden');
+        toggleIcon.style.transform = detailedResults.classList.contains('hidden') 
+          ? 'rotate(0deg)' 
+          : 'rotate(180deg)';
+      });
+
+      console.log("✅ BarakoSense UI initialized");
+    });
+  </script>
+  
+  <script src="{{ url_for('static', filename='js/predict.js') }}"></script>
 </body>
 </html>
