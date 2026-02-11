@@ -42,6 +42,7 @@ def preprocess_pil_image(file_bytes, target_size=(224, 224)):
 def home():
     return render_template("index.html")
 
+
 @app.route("/predict", methods=["GET", "POST"])
 def predict():
     # -------------------------
@@ -62,6 +63,9 @@ def predict():
 
     model_results = []
 
+    liberica_votes = 0
+    not_liberica_votes = 0
+
     for organ, model in MODELS.items():
         pred = model.predict(arr, verbose=0)
 
@@ -71,21 +75,42 @@ def predict():
         predicted_class = "Liberica" if liberica_prob >= 0.5 else "Not Liberica"
         confidence = max(liberica_prob, not_liberica_prob)
 
+        # Count votes
+        if predicted_class == "Liberica":
+            liberica_votes += 1
+        else:
+            not_liberica_votes += 1
+
         model_results.append({
             "organ": organ,
             "predicted_class": predicted_class,
             "confidence": round(confidence * 100, 2)
         })
 
-    # Arbitration → highest confidence wins
-    best = max(model_results, key=lambda x: x["confidence"])
+    # =========================
+    # Majority Voting Decision
+    # =========================
+    if liberica_votes >= 2:
+        final_prediction = "Liberica"
+    else:
+        final_prediction = "Not Liberica"
+
+    # Optional: overall confidence (average of 3 models)
+    avg_confidence = round(
+        sum(r["confidence"] for r in model_results) / 3, 2
+    )
 
     return jsonify({
-        "final_prediction": best["predicted_class"],
-        "detected_plant_part": best["organ"].capitalize(),
-        "confidence": best["confidence"],
+        "final_prediction": final_prediction,
+        "liberica_votes": liberica_votes,
+        "not_liberica_votes": not_liberica_votes,
+        "average_confidence": avg_confidence,
         "all_model_outputs": model_results
     })
+
+@app.route("/lexicon")
+def lexicon():
+    return render_template("lexicon.html")
 
 # =========================
 # Run Server
