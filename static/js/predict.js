@@ -1,5 +1,7 @@
 const FLASK_API = "/predict";
 let uploadedFile = null;
+let cameraStream = null;
+let isCameraActive = false;
 
 // =========================
 // Elements
@@ -8,17 +10,102 @@ const imageUpload = document.getElementById("image-upload");
 const previewBox = document.getElementById("image-preview");
 const placeholder = document.getElementById("placeholder");
 const previewImg = document.getElementById("preview-img");
+const cameraVideo = document.getElementById("camera-video");
+const cameraBtn = document.getElementById("camera-btn");
+const cameraBtnText = document.getElementById("camera-btn-text");
 const predictBtn = document.getElementById("predict-btn");
 const clearBtn = document.getElementById("clear-btn");
 const loader = document.getElementById("loader");
 
 // Result elements
-const leafResult = document.getElementById("leaf-result");
-const barkResult = document.getElementById("bark-result");
-const cherryResult = document.getElementById("cherry-result")
 const finalResult = document.getElementById("final-result");
-const confidence = document.getElementById("confidence");
 const confidenceBar = document.getElementById("confidence-bar");
+const gradcamImage = document.getElementById("gradcam-image");
+
+// =========================
+// Camera Functions
+// =========================
+
+async function startCamera() {
+  try {
+    // Request camera access
+    cameraStream = await navigator.mediaDevices.getUserMedia({ 
+      video: { 
+        facingMode: 'environment' // Use back camera on mobile
+      } 
+    });
+    
+    // Show camera video
+    cameraVideo.srcObject = cameraStream;
+    cameraVideo.classList.remove('hidden');
+    placeholder.classList.add('hidden');
+    previewImg.classList.add('hidden');
+    
+    isCameraActive = true;
+    cameraBtnText.textContent = "Capture Photo";
+    cameraBtn.querySelector('.material-symbols-outlined').textContent = "photo_camera";
+    
+  } catch (err) {
+    console.error("Camera access error:", err);
+    alert("Could not access camera. Please check permissions or use file upload instead.");
+  }
+}
+
+function stopCamera() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(track => track.stop());
+    cameraStream = null;
+  }
+  cameraVideo.classList.add('hidden');
+  isCameraActive = false;
+  cameraBtnText.textContent = "Use Camera";
+  cameraBtn.querySelector('.material-symbols-outlined').textContent = "photo_camera";
+}
+
+function capturePhoto() {
+  // Create a canvas to capture the current video frame
+  const canvas = document.createElement('canvas');
+  canvas.width = cameraVideo.videoWidth;
+  canvas.height = cameraVideo.videoHeight;
+  
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(cameraVideo, 0, 0);
+  
+  // Convert canvas to blob
+  canvas.toBlob((blob) => {
+    uploadedFile = new File([blob], "camera-capture.jpg", { type: "image/jpeg" });
+    
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      previewImg.src = ev.target.result;
+      previewImg.classList.remove('hidden');
+      cameraVideo.classList.add('hidden');
+      placeholder.classList.add('hidden');
+      predictBtn.disabled = false;
+      
+      // Update result text
+      finalResult.textContent = "Ready for prediction";
+      finalResult.classList.remove('text-primary');
+      finalResult.classList.add('text-text-muted-light', 'dark:text-text-muted-dark');
+    };
+    reader.readAsDataURL(uploadedFile);
+    
+    // Stop camera
+    stopCamera();
+  }, 'image/jpeg', 0.95);
+}
+
+// Camera button click handler
+cameraBtn.addEventListener("click", () => {
+  if (isCameraActive) {
+    // Capture photo
+    capturePhoto();
+  } else {
+    // Start camera
+    startCamera();
+  }
+});
 
 // =========================
 // Upload + Preview
@@ -40,6 +127,11 @@ function handleFileInput(e) {
     return;
   }
 
+  // Stop camera if active
+  if (isCameraActive) {
+    stopCamera();
+  }
+
   uploadedFile = file;
   const reader = new FileReader();
   
@@ -47,6 +139,7 @@ function handleFileInput(e) {
     previewImg.src = ev.target.result;
     previewImg.classList.remove('hidden');
     placeholder.classList.add('hidden');
+    cameraVideo.classList.add('hidden');
     predictBtn.disabled = false;
     
     // Update result text
@@ -72,6 +165,11 @@ function handleDrop(e) {
   
   const dt = e.dataTransfer;
   if (dt && dt.files && dt.files.length > 0) {
+    // Stop camera if active
+    if (isCameraActive) {
+      stopCamera();
+    }
+    
     // Set file to input
     const dataTransfer = new DataTransfer();
     dataTransfer.items.add(dt.files[0]);
@@ -119,6 +217,12 @@ predictBtn.addEventListener("click", async () => {
   // Show loader in results
   finalResult.classList.add('hidden');
   loader.classList.remove('hidden');
+  
+  // Reset heatmap to empty state
+  const gradcamEmpty = document.getElementById('gradcam-empty');
+  const gradcamDisplay = document.getElementById('gradcam-display');
+  gradcamEmpty.classList.remove('hidden');
+  gradcamDisplay.classList.add('hidden');
 
   const formData = new FormData();
   formData.append("file", uploadedFile);
@@ -144,35 +248,27 @@ predictBtn.addEventListener("click", async () => {
     finalResult.classList.remove('text-text-muted-light', 'dark:text-text-muted-dark');
     finalResult.classList.add('text-primary');
 
-    // =============================
-    // Show individual model outputs
-    // =============================
-    data.all_model_outputs.forEach(result => {
-      const text = `${result.predicted_class} (${result.confidence}%)`;
-
-      if (result.organ === "leaf") {
-        leafResult.textContent = text;
-      }
-      if (result.organ === "bark") {
-        barkResult.textContent = text;
-      }
-      if (result.organ === "cherry") {
-        cherryResult.textContent = text;
-      }
-    });
-
-    // =============================
-    // Use ensemble average confidence
-    // =============================
-    confidence.textContent = data.average_confidence + "%";
-    confidenceBar.style.width = data.average_confidence + "%";
-
+    // Update confidence bar
+    const confidenceRatio = data.confidence_ratio;
+    let width = "0%";
+    
+    if (confidenceRatio >= 100) {
+      width = "100%";
+    } else if (confidenceRatio >= 80) {
+      width = "80%";
+    } else if (confidenceRatio >= 60) {
+      width = "60%";
+    } else {
+      width = "40%";
+    }
+    
+    confidenceBar.style.width = width;
 
     // Set confidence bar color based on level
-    if (data.average_confidence >= 80) {
+    if (confidenceRatio >= 80) {
       confidenceBar.classList.remove('bg-yellow-500', 'bg-red-500');
       confidenceBar.classList.add('bg-primary');
-    } else if (data.average_confidence >= 60) {
+    } else if (confidenceRatio >= 60) {
       confidenceBar.classList.remove('bg-primary', 'bg-red-500');
       confidenceBar.classList.add('bg-yellow-500');
     } else {
@@ -180,7 +276,33 @@ predictBtn.addEventListener("click", async () => {
       confidenceBar.classList.add('bg-red-500');
     }
 
-    // Success notification (optional)
+    // Display Grad-CAM if available
+    console.log('[DEBUG] Checking Grad-CAM data...');
+    console.log('[DEBUG] Full response data:', data);
+    console.log('[DEBUG] gradcam_image exists:', !!data.gradcam_image);
+    console.log('[DEBUG] gradcam_image length:', data.gradcam_image ? data.gradcam_image.length : 0);
+    console.log('[DEBUG] gradcam_model:', data.gradcam_model);
+    
+    const gradcamEmpty = document.getElementById('gradcam-empty');
+    const gradcamDisplay = document.getElementById('gradcam-display');
+    
+    if (data.gradcam_image) {
+      console.log('[DEBUG] Setting Grad-CAM image source...');
+      gradcamImage.src = data.gradcam_image;
+      
+      // Hide empty state, show heatmap
+      gradcamEmpty.classList.add('hidden');
+      gradcamDisplay.classList.remove('hidden');
+      
+      console.log('[DEBUG] ✓ Grad-CAM should now be visible');
+    } else {
+      console.log('[DEBUG] ✗ No Grad-CAM image received from server');
+      // Show empty state, hide heatmap
+      gradcamEmpty.classList.remove('hidden');
+      gradcamDisplay.classList.add('hidden');
+    }
+
+    // Success notification
     showNotification("Prediction complete!", "success");
 
   } catch (err) {
@@ -193,19 +315,8 @@ predictBtn.addEventListener("click", async () => {
     finalResult.classList.remove('text-primary');
     finalResult.classList.add('text-red-600', 'dark:text-red-400');
     
-    leafResult.textContent = "-";
-    barkResult.textContent = "-";
-    cherryResult.textContent = "-";
-    confidence.textContent = "0%";
     confidenceBar.style.width = "0%";
-    
-    detailedResults.innerHTML = `
-      <div class="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800 text-center">
-        <span class="material-symbols-outlined text-red-600 dark:text-red-400 text-3xl mb-2">error</span>
-        <p class="text-sm text-red-600 dark:text-red-400 font-semibold">Failed to process image</p>
-        <p class="text-xs text-red-500 dark:text-red-300 mt-1">${err.message}</p>
-      </div>
-    `;
+    gradcamContainer.classList.add('hidden');
 
     showNotification("Prediction failed. Please try again.", "error");
   } finally {
@@ -220,12 +331,18 @@ predictBtn.addEventListener("click", async () => {
 // =========================
 
 clearBtn.addEventListener("click", () => {
+  // Stop camera if active
+  if (isCameraActive) {
+    stopCamera();
+  }
+  
   uploadedFile = null;
   imageUpload.value = '';
   
   // Reset preview
   previewImg.classList.add('hidden');
   previewImg.src = '';
+  cameraVideo.classList.add('hidden');
   placeholder.classList.remove('hidden');
   
   // Disable predict button
@@ -236,14 +353,14 @@ clearBtn.addEventListener("click", () => {
   finalResult.classList.remove('text-red-600', 'dark:text-red-400');
   finalResult.classList.add('text-primary');
   
-  leafResult.textContent = "-";
-  barkResult.textContent = "-";
-  cherryResult.textContent = "-";
-  confidence.textContent = "-";
   confidenceBar.style.width = "0%";
   confidenceBar.className = "bg-primary h-2.5 rounded-full transition-all duration-500";
   
-  detailedResults.innerHTML = "";
+  // Reset Grad-CAM display
+  const gradcamEmpty = document.getElementById('gradcam-empty');
+  const gradcamDisplay = document.getElementById('gradcam-display');
+  gradcamEmpty.classList.remove('hidden');
+  gradcamDisplay.classList.add('hidden');
   
   // Hide loader if visible
   loader.classList.add('hidden');
@@ -253,15 +370,6 @@ clearBtn.addEventListener("click", () => {
 // =========================
 // Helper Functions
 // =========================
-
-function getOrganIcon(organ) {
-  const icons = {
-    'leaf': 'eco',
-    'bark': 'park',
-    'cherry': 'nutrition'
-  };
-  return icons[organ.toLowerCase()] || 'category';
-}
 
 function showNotification(message, type = 'info') {
   // Create notification element
@@ -323,6 +431,16 @@ document.addEventListener('keydown', (e) => {
   // Escape to clear
   if (e.key === 'Escape' && uploadedFile) {
     clearBtn.click();
+  }
+});
+
+// =========================
+// Cleanup on page unload
+// =========================
+
+window.addEventListener('beforeunload', () => {
+  if (isCameraActive) {
+    stopCamera();
   }
 });
 
