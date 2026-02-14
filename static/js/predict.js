@@ -288,19 +288,8 @@ predictBtn.addEventListener("click", async () => {
     const confidenceRatio = data.confidence_ratio;
     confidenceText.textContent = `${confidenceRatio}%`;
     
-    let width = "0%";
-    
-    if (confidenceRatio >= 100) {
-      width = "100%";
-    } else if (confidenceRatio >= 80) {
-      width = "80%";
-    } else if (confidenceRatio >= 60) {
-      width = "60%";
-    } else {
-      width = "40%";
-    }
-    
-    confidenceBar.style.width = width;
+    // Set width to actual percentage
+    confidenceBar.style.width = `${confidenceRatio}%`;
 
     // Set confidence bar color based on level
     if (confidenceRatio >= 80) {
