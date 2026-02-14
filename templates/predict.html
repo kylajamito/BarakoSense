@@ -100,6 +100,45 @@
       object-fit: cover;
       border-radius: 0.75rem;
     }
+
+    /* Checklist styles */
+    .checklist-item {
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .checklist-item:hover {
+      background-color: rgba(139, 69, 19, 0.1);
+    }
+
+    .checklist-item.selected {
+      background-color: rgba(139, 69, 19, 0.15);
+    }
+
+    .checklist-checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #8B4513;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .checklist-item.selected .checklist-checkbox {
+      background-color: #8B4513;
+    }
+
+    .checklist-checkmark {
+      display: none;
+      color: white;
+      font-size: 16px;
+    }
+
+    .checklist-item.selected .checklist-checkmark {
+      display: block;
+    }
   </style>
 </head>
 
@@ -164,32 +203,16 @@
               2
             </div>
             <div>
-              <h3 class="font-bold text-lg mb-1">Supported Images</h3>
+              <h3 class="font-bold text-lg mb-1">Select Plant Part Type</h3>
               <p class="text-sm text-text-muted-light dark:text-text-muted-dark mb-2">
-                You can upload photos of any visible part of the Liberica plant, such as:
+                Choose what type of plant part your image contains from the checklist:
               </p>
-
-              <div class="grid grid-cols-3 gap-2">
-                
-                <!-- Leaf -->
-                <div class="bg-primary/10 dark:bg-primary/20 rounded-lg p-2 text-center border border-primary/30">
-                  <img src="static/icons/leaf_nobg.svg" alt="Leaf" class="w-15 h-15 mx-auto mb-1">
-                  <p class="font-semibold text-xs">Leaf</p>
-                </div>
-
-                <!-- Bark -->
-                <div class="bg-primary/10 dark:bg-primary/20 rounded-lg p-2 text-center border border-primary/30">
-                  <img src="static/icons/bark_nobg.svg" alt="Bark" class="w-15 h-15 mx-auto mb-1">
-                  <p class="font-semibold text-xs">Bark</p>
-                </div>
-
-                <!-- Cherry -->
-                <div class="bg-primary/10 dark:bg-primary/20 rounded-lg p-2 text-center border border-primary/30">
-                  <img src="static/icons/cherry_nobg.svg" alt="Cherry" class="w-15 h-15 mx-auto mb-1">
-                  <p class="font-semibold text-xs">Cherry</p>
-                </div>
-
-              </div>
+              <ul class="text-sm text-text-muted-light dark:text-text-muted-dark list-disc list-inside space-y-1">
+                <li><strong>Leaf</strong> - Image contains only leaf</li>
+                <li><strong>Bark</strong> - Image contains only bark/stem</li>
+                <li><strong>Cherry</strong> - Image contains only coffee cherries</li>
+                <li><strong>Mix</strong> - Image contains multiple parts (ensemble voting)</li>
+              </ul>
             </div>
           </div>
 
@@ -201,7 +224,7 @@
             <div>
               <h3 class="font-bold text-lg mb-1">Get Results</h3>
               <p class="text-sm text-text-muted-light dark:text-text-muted-dark">
-                Click <strong>"Start Prediction"</strong> and our AI will automatically analyze the image and show you whether it's Liberica or not, along with a visual heatmap showing what the AI focused on.
+                Click <strong>"Start Prediction"</strong> and our AI will analyze the image. If you selected a specific part, only that model will be used. If you selected "Mix", all models will vote on the result.
               </p>
             </div>
           </div>
@@ -224,9 +247,7 @@
           <h1 class="text-3xl sm:text-4xl font-bold text-primary mb-2">
             Coffee Plant Identifier
           </h1>
-          <p class="text-text-muted-light dark:text-text-muted-dark">
-            Upload an image or use your camera to identify Coffea Liberica (Kapeng Barako)
-          </p>
+
         </div>
 
         <!-- Three Column Layout -->
@@ -234,7 +255,7 @@
           
           <!-- COLUMN 1: UPLOAD & CONTROLS -->
           <div class="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-2xl p-6 shadow-lg">
-            <h2 class="text-xl font-bold mb-4">Upload Image</h2>
+            <h2 class="text-xl font-bold mb-3">Upload Image</h2>
 
             <!-- Upload Area -->
             <div
@@ -242,7 +263,7 @@
               class="relative w-full border-2 border-dashed border-border-light dark:border-border-dark rounded-xl
                      flex items-center justify-center text-base text-text-muted-light dark:text-text-muted-dark
                      hover:border-primary hover:bg-primary/20 dark:hover:bg-primary/30 transition-all cursor-pointer bg-primary/10 dark:bg-primary/20 shadow-inner group mb-4"
-              style="height: 260px;"
+              style="height: 250px;"
             >
               <input
                 id="image-upload"
@@ -271,38 +292,76 @@
               <video id="camera-video" class="hidden absolute inset-0" autoplay playsinline></video>
             </div>
 
-            <!-- Buttons -->
-            <div class="space-y-3">
+            <!-- Plant Part Selection Checklist (2x2 Grid) -->
+            <div class="mb-3">
+              <label class="block text-sm font-semibold mb-2">Select Plant Part</label>
+              <div class="grid grid-cols-2 gap-2">
+                <!-- Leaf Option -->
+                <div class="checklist-item flex items-center gap-2 p-2 rounded-lg border border-border-light dark:border-border-dark" data-part="leaf">
+                  <div class="checklist-checkbox">
+                    <span class="checklist-checkmark material-symbols-outlined">check</span>
+                  </div>
+                  <span class="font-medium text-sm">Leaf</span>
+                </div>
+
+                <!-- Bark Option -->
+                <div class="checklist-item flex items-center gap-2 p-2 rounded-lg border border-border-light dark:border-border-dark" data-part="bark">
+                  <div class="checklist-checkbox">
+                    <span class="checklist-checkmark material-symbols-outlined">check</span>
+                  </div>
+                  <span class="font-medium text-sm">Bark</span>
+                </div>
+
+                <!-- Cherry Option -->
+                <div class="checklist-item flex items-center gap-2 p-2 rounded-lg border border-border-light dark:border-border-dark" data-part="cherry">
+                  <div class="checklist-checkbox">
+                    <span class="checklist-checkmark material-symbols-outlined">check</span>
+                  </div>
+                  <span class="font-medium text-sm">Cherry</span>
+                </div>
+
+                <!-- Mix Option (default) -->
+                <div class="checklist-item selected flex items-center gap-2 p-2 rounded-lg border border-border-light dark:border-border-dark" data-part="mix">
+                  <div class="checklist-checkbox">
+                    <span class="checklist-checkmark material-symbols-outlined">check</span>
+                  </div>
+                  <span class="font-medium text-sm">Mix</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Buttons (2x1 Grid) -->
+            <div class="grid grid-cols-2 gap-3">
               <!-- Camera Button -->
               <button
                 id="camera-btn"
-                class="w-full flex items-center justify-center gap-2 rounded-xl h-12 px-4
+                class="flex items-center justify-center gap-2 rounded-xl h-12 px-4
                        bg-border-light dark:bg-border-dark text-text-light dark:text-text-dark font-semibold text-base
                        hover:bg-primary/20 dark:hover:bg-primary/30 transition-all hover:scale-105 shadow"
               >
                 <span class="material-symbols-outlined">photo_camera</span>
-                <span id="camera-btn-text">Use Camera</span>
+                <span id="camera-btn-text" class="hidden sm:inline">Camera</span>
               </button>
 
               <button
                 id="predict-btn"
                 disabled
-                class="w-full flex items-center justify-center gap-2 rounded-xl h-12 px-4
+                class="flex items-center justify-center gap-2 rounded-xl h-12 px-4
                        bg-primary text-white font-bold text-base shadow-md transition-all
                        hover:scale-105 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span class="material-symbols-outlined">auto_awesome</span>
-                Start Prediction
+                <span class="hidden sm:inline">Predict</span>
               </button>
             </div>
           </div>
 
           <!-- COLUMN 2: HEATMAP -->
           <div class="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-2xl p-6 shadow-lg">
-            <h2 class="text-xl font-bold mb-4">AI Focus Areas</h2>
+            <h2 class="text-xl font-bold mb-3">AI Focus Areas</h2>
 
             <!-- Heatmap Display -->
-            <div id="gradcam-container" class="flex items-center justify-center bg-background-light dark:bg-background-dark rounded-lg border border-border-light dark:border-border-dark mb-4" style="height: 260px;">
+            <div id="gradcam-container" class="relative w-full border-2 border-dashed border-border-light dark:border-border-dark rounded-xl flex items-center justify-center bg-background-light dark:bg-background-dark shadow-inner mb-4" style="height: 250px;">
               <!-- Empty State -->
               <div id="gradcam-empty" class="text-center p-8">
                 <span class="material-symbols-outlined text-6xl text-text-muted-light dark:text-text-muted-dark mb-3 block">
@@ -314,9 +373,7 @@
               </div>
 
               <!-- Heatmap Image -->
-              <div id="gradcam-display" class="hidden w-full h-full flex flex-col">
-                <img id="gradcam-image" class="w-full flex-grow object-contain rounded-lg" alt="Grad-CAM Heatmap" style="max-height: 260px;" />
-              </div>
+              <img id="gradcam-image" class="hidden absolute inset-0 w-full h-full object-contain rounded-xl" alt="Grad-CAM Heatmap" />
             </div>
 
             <!-- Clear Button -->
@@ -333,7 +390,7 @@
 
           <!-- COLUMN 3: RESULTS & INFO -->
           <div class="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-2xl p-6 shadow-lg flex flex-col">
-            <h2 class="text-xl font-bold mb-4">Prediction Results</h2>
+            <h2 class="text-xl font-bold mb-3">Prediction Results</h2>
 
             <div class="flex-grow space-y-4">
               <!-- Final Prediction Card -->
@@ -364,6 +421,7 @@
                     <span class="material-symbols-outlined text-primary">analytics</span>
                     <span class="text-sm font-semibold">Confidence Level</span>
                   </div>
+                  <span id="confidence-text" class="text-xs font-bold text-primary">0%</span>
                 </div>
                 <div class="w-full bg-border-light dark:bg-border-dark rounded-full h-2.5">
                   <div id="confidence-bar" class="bg-primary h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
@@ -377,7 +435,8 @@
                   <span class="text-sm font-semibold">Instructions</span>
                 </div>
                 <ol class="text-xs text-text-muted-light dark:text-text-muted-dark space-y-1 list-decimal list-inside">
-                  <li>Upload or capture an image of the plant</li>
+                  <li>Upload or capture an image</li>
+                  <li>Select the plant part type</li>
                   <li>Click "Start Prediction" to analyze</li>
                   <li>View results and AI focus areas</li>
                 </ol>

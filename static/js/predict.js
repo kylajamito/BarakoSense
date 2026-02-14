@@ -2,6 +2,7 @@ const FLASK_API = "/predict";
 let uploadedFile = null;
 let cameraStream = null;
 let isCameraActive = false;
+let selectedPlantPart = "mix"; // default selection
 
 // =========================
 // Elements
@@ -20,7 +21,40 @@ const loader = document.getElementById("loader");
 // Result elements
 const finalResult = document.getElementById("final-result");
 const confidenceBar = document.getElementById("confidence-bar");
+const confidenceText = document.getElementById("confidence-text");
 const gradcamImage = document.getElementById("gradcam-image");
+
+// Checklist selection elements
+const checklistItems = document.querySelectorAll(".checklist-item");
+
+// =========================
+// Plant Part Selection (Checklist)
+// =========================
+
+checklistItems.forEach(item => {
+  item.addEventListener("click", () => {
+    // Remove selected class from all items
+    checklistItems.forEach(i => {
+      i.classList.remove("selected");
+    });
+    
+    // Add selected class to clicked item
+    item.classList.add("selected");
+    
+    // Update selected plant part
+    selectedPlantPart = item.getAttribute("data-part");
+    console.log(`[INFO] Selected plant part: ${selectedPlantPart}`);
+    
+    // Show notification
+    const partNames = {
+      "leaf": "Leaf",
+      "bark": "Bark",
+      "cherry": "Cherry",
+      "mix": "Mix (Ensemble)"
+    };
+    showNotification(`Selected: ${partNames[selectedPlantPart]}`, "info");
+  });
+});
 
 // =========================
 // Camera Functions
@@ -220,12 +254,12 @@ predictBtn.addEventListener("click", async () => {
   
   // Reset heatmap to empty state
   const gradcamEmpty = document.getElementById('gradcam-empty');
-  const gradcamDisplay = document.getElementById('gradcam-display');
   gradcamEmpty.classList.remove('hidden');
-  gradcamDisplay.classList.add('hidden');
+  gradcamImage.classList.add('hidden');
 
   const formData = new FormData();
   formData.append("file", uploadedFile);
+  formData.append("plant_part", selectedPlantPart); // Add plant part selection
 
   try {
     const response = await fetch(FLASK_API, {
@@ -239,6 +273,8 @@ predictBtn.addEventListener("click", async () => {
 
     const data = await response.json();
 
+    console.log('[DEBUG] Response data:', data);
+
     // Hide loader, show results
     loader.classList.add('hidden');
     finalResult.classList.remove('hidden');
@@ -250,6 +286,8 @@ predictBtn.addEventListener("click", async () => {
 
     // Update confidence bar
     const confidenceRatio = data.confidence_ratio;
+    confidenceText.textContent = `${confidenceRatio}%`;
+    
     let width = "0%";
     
     if (confidenceRatio >= 100) {
@@ -278,13 +316,7 @@ predictBtn.addEventListener("click", async () => {
 
     // Display Grad-CAM if available
     console.log('[DEBUG] Checking Grad-CAM data...');
-    console.log('[DEBUG] Full response data:', data);
     console.log('[DEBUG] gradcam_image exists:', !!data.gradcam_image);
-    console.log('[DEBUG] gradcam_image length:', data.gradcam_image ? data.gradcam_image.length : 0);
-    console.log('[DEBUG] gradcam_model:', data.gradcam_model);
-    
-    const gradcamEmpty = document.getElementById('gradcam-empty');
-    const gradcamDisplay = document.getElementById('gradcam-display');
     
     if (data.gradcam_image) {
       console.log('[DEBUG] Setting Grad-CAM image source...');
@@ -292,18 +324,19 @@ predictBtn.addEventListener("click", async () => {
       
       // Hide empty state, show heatmap
       gradcamEmpty.classList.add('hidden');
-      gradcamDisplay.classList.remove('hidden');
+      gradcamImage.classList.remove('hidden');
       
       console.log('[DEBUG] ✓ Grad-CAM should now be visible');
     } else {
       console.log('[DEBUG] ✗ No Grad-CAM image received from server');
       // Show empty state, hide heatmap
       gradcamEmpty.classList.remove('hidden');
-      gradcamDisplay.classList.add('hidden');
+      gradcamImage.classList.add('hidden');
     }
 
     // Success notification
-    showNotification("Prediction complete!", "success");
+    const modeText = data.plant_part_mode === "mix" ? "Ensemble" : data.plant_part_mode.charAt(0).toUpperCase() + data.plant_part_mode.slice(1);
+    showNotification(`Prediction complete (${modeText} mode)`, "success");
 
   } catch (err) {
     console.error("Prediction error:", err);
@@ -316,7 +349,7 @@ predictBtn.addEventListener("click", async () => {
     finalResult.classList.add('text-red-600', 'dark:text-red-400');
     
     confidenceBar.style.width = "0%";
-    gradcamContainer.classList.add('hidden');
+    confidenceText.textContent = "0%";
 
     showNotification("Prediction failed. Please try again.", "error");
   } finally {
@@ -354,17 +387,20 @@ clearBtn.addEventListener("click", () => {
   finalResult.classList.add('text-primary');
   
   confidenceBar.style.width = "0%";
+  confidenceText.textContent = "0%";
   confidenceBar.className = "bg-primary h-2.5 rounded-full transition-all duration-500";
   
   // Reset Grad-CAM display
   const gradcamEmpty = document.getElementById('gradcam-empty');
-  const gradcamDisplay = document.getElementById('gradcam-display');
   gradcamEmpty.classList.remove('hidden');
-  gradcamDisplay.classList.add('hidden');
+  gradcamImage.classList.add('hidden');
+  gradcamImage.src = '';
   
   // Hide loader if visible
   loader.classList.add('hidden');
   finalResult.classList.remove('hidden');
+  
+  showNotification("All cleared", "info");
 });
 
 // =========================
@@ -449,3 +485,4 @@ window.addEventListener('beforeunload', () => {
 // =========================
 
 console.log("BarakoSense Predict Page Loaded ✅");
+console.log(`Default plant part: ${selectedPlantPart}`);

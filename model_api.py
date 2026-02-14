@@ -185,6 +185,15 @@ def predict():
     raw = file.read()
     arr, original_img = preprocess_pil_image(raw)
 
+    # Get the plant part selection from the request
+    plant_part = request.form.get("plant_part", "mix").lower()
+    print(f"[INFO] Plant part selection: {plant_part}")
+
+    # Validate plant part selection
+    valid_parts = ["leaf", "bark", "cherry", "mix"]
+    if plant_part not in valid_parts:
+        return jsonify({"error": f"Invalid plant part. Must be one of: {valid_parts}"}), 400
+
     liberica_votes = 0
     not_liberica_votes = 0
     
@@ -192,8 +201,26 @@ def predict():
     winning_model = None
     winning_organ = None
     max_confidence = 0
+    
+    # Store individual predictions for response
+    individual_predictions = {}
 
-    for organ, model in MODELS.items():
+    # =========================
+    # Determine which models to use
+    # =========================
+    if plant_part == "mix":
+        # Use all models (ensemble)
+        models_to_use = MODELS
+        print("[INFO] Using ensemble mode (all models)")
+    else:
+        # Use only the specific model
+        models_to_use = {plant_part: MODELS[plant_part]}
+        print(f"[INFO] Using single model mode ({plant_part} only)")
+
+    # =========================
+    # Run inference
+    # =========================
+    for organ, model in models_to_use.items():
         pred = model.predict(arr, verbose=0)
 
         liberica_prob = float(pred[0][0])
@@ -203,6 +230,14 @@ def predict():
         confidence = max(liberica_prob, not_liberica_prob)
 
         print(f"[INFO] {organ}: {predicted_class} ({confidence*100:.2f}%)")
+
+        # Store individual prediction
+        individual_predictions[organ] = {
+            "prediction": predicted_class,
+            "confidence": round(confidence * 100, 2),
+            "liberica_prob": round(liberica_prob * 100, 2),
+            "not_liberica_prob": round(not_liberica_prob * 100, 2)
+        }
 
         # Count votes
         if predicted_class == "Liberica":
@@ -217,18 +252,27 @@ def predict():
             winning_organ = organ
 
     # =========================
-    # Majority Voting Decision
+    # Determine Final Prediction
     # =========================
-    if liberica_votes >= 2:
-        final_prediction = "Liberica"
+    if plant_part == "mix":
+        # Majority voting for ensemble
+        if liberica_votes >= 2:
+            final_prediction = "Liberica"
+        else:
+            final_prediction = "Not Liberica"
+        
+        # Calculate confidence ratio
+        total_votes = liberica_votes + not_liberica_votes
+        confidence_ratio = max(liberica_votes, not_liberica_votes) / total_votes * 100
+        
+        print(f"[INFO] Ensemble prediction: {final_prediction} (Votes: L={liberica_votes}, NL={not_liberica_votes})")
     else:
-        final_prediction = "Not Liberica"
+        # Single model prediction
+        final_prediction = individual_predictions[plant_part]["prediction"]
+        confidence_ratio = individual_predictions[plant_part]["confidence"]
+        
+        print(f"[INFO] Single model prediction ({plant_part}): {final_prediction} ({confidence_ratio:.2f}%)")
 
-    # Calculate confidence level
-    total_votes = liberica_votes + not_liberica_votes
-    confidence_ratio = max(liberica_votes, not_liberica_votes) / total_votes * 100
-    
-    print(f"[INFO] Final prediction: {final_prediction} (Votes: L={liberica_votes}, NL={not_liberica_votes})")
     print(f"[INFO] Using '{winning_organ}' model for Grad-CAM (confidence: {max_confidence*100:.2f}%)")
     
     # =========================
@@ -254,15 +298,18 @@ def predict():
 
     response_data = {
         "final_prediction": final_prediction,
+        "plant_part_mode": plant_part,
         "liberica_votes": liberica_votes,
         "not_liberica_votes": not_liberica_votes,
         "confidence_ratio": round(confidence_ratio, 2),
+        "individual_predictions": individual_predictions,
         "gradcam_image": gradcam_image,
         "gradcam_model": winning_organ
     }
     
     # Log what we're sending
     print(f"[INFO] Response data:")
+    print(f"  - plant_part_mode: {plant_part}")
     print(f"  - final_prediction: {final_prediction}")
     print(f"  - confidence_ratio: {confidence_ratio:.2f}%")
     print(f"  - gradcam_image: {'✓ Present (' + str(len(gradcam_image)) + ' chars)' if gradcam_image else '✗ None'}")
