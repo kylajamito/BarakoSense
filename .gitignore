@@ -5,7 +5,7 @@ node_modules/
 uploads/
 
 # Python virtual environment
-venv/
+.venv/
 
 # Python cache and temporary files
 __pycache__/
