@@ -20,12 +20,34 @@ MODEL_PATHS = {
     "cherry": "models/cherry_MobileNetV2_80-20_model.keras"
 }
 
+# MODELS = {}
+# for organ, path in MODEL_PATHS.items():
+#     if not os.path.exists(path):
+#         raise FileNotFoundError(f"{path} not found")
+#     MODELS[organ] = load_model(path)
+#     print(f"[INFO] Loaded {organ} model")
+
+# =========================
+# Lazy Model Loader
+# =========================
 MODELS = {}
-for organ, path in MODEL_PATHS.items():
-    if not os.path.exists(path):
-        raise FileNotFoundError(f"{path} not found")
-    MODELS[organ] = load_model(path)
-    print(f"[INFO] Loaded {organ} model")
+
+def get_model(organ):
+    if organ not in MODEL_PATHS:
+        raise ValueError(f"Invalid organ type: {organ}")
+
+    if organ not in MODELS:
+        path = MODEL_PATHS[organ]
+
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"{path} not found")
+
+        print(f"[INFO] Loading {organ} model...")
+        MODELS[organ] = load_model(path)
+        print(f"[INFO] ✓ {organ} model loaded")
+
+    return MODELS[organ]
+
 
 # =========================
 # Image Preprocessing
@@ -209,12 +231,12 @@ def predict():
     # Determine which models to use
     # =========================
     if plant_part == "mix":
-        # Use all models (ensemble)
-        models_to_use = MODELS
+        models_to_use = {organ: get_model(organ) for organ in MODEL_PATHS}
+
         print("[INFO] Using ensemble mode (all models)")
     else:
         # Use only the specific model
-        models_to_use = {plant_part: MODELS[plant_part]}
+        models_to_use = {plant_part: get_model(plant_part)}
         print(f"[INFO] Using single model mode ({plant_part} only)")
 
     # =========================
