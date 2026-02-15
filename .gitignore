@@ -5,7 +5,7 @@ node_modules/
 uploads/
 
 # Python virtual environment
-venv/
+.venv/
 
 # Python cache and temporary files
 __pycache__/
@@ -23,4 +23,6 @@ __pycache__/
 # OS-generated files
 .DS_Store
 Thumbs.db
+node_modules
+node_modules
 node_modules
