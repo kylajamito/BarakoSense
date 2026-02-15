@@ -22,4 +22,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Gunicorn entrypoint
-CMD ["gunicorn", "-b", "0.0.0.0:8080", "model_api:app"]
+CMD ["gunicorn", "--workers", "1", "--threads", "2", "--timeout", "180", "-b", "0.0.0.0:8080", "model_api:app"]
